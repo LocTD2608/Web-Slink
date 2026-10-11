@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tabular figures format chống rung layout khi polling cập nhật số slot & thời gian */
+.tabular-stat, .font-tabular {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #F8FAFC;
+}
