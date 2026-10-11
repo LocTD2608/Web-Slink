@@ -24,18 +24,17 @@ async def main():
     redis_client = RedisClientManager.get_instance().get_client()
     cache_gateway = RedisCacheGateway(redis_client)
     
-    # 2. Khởi tạo Database Session và Repository
-    async with AsyncSessionLocal() as session:
-        persistence_gateway = PostgresRegistrationRepository(session)
-        
-        consumer = RegistrationConsumer(
-            rabbitmq_manager=rmq_manager,
-            cache_gateway=cache_gateway,
-            persistence_gateway=persistence_gateway
-        )
-        
-        logger.info("Worker ready. Listening on RabbitMQ 'registration_queue'...")
-        await consumer.start_consuming()
+    # 2. Khởi tạo Database Session Factory và Persistence Gateway độc lập
+    persistence_gateway = PostgresRegistrationRepository(session_factory=AsyncSessionLocal)
+    
+    consumer = RegistrationConsumer(
+        rabbitmq_manager=rmq_manager,
+        cache_gateway=cache_gateway,
+        persistence_gateway=persistence_gateway
+    )
+    
+    logger.info("Worker ready. Listening on RabbitMQ 'registration_queue'...")
+    await consumer.start_consuming()
 
 if __name__ == "__main__":
     try:

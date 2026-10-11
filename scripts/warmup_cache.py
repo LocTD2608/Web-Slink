@@ -19,11 +19,15 @@ async def warmup_cache():
     pipe = r.pipeline()
 
     section_idx = 1
+    course_section_counter = {}
     while section_idx <= 200:
         for code, name, credits, prereq, dept in COURSES_SPEC:
             if section_idx > 200:
                 break
             
+            course_section_counter[code] = course_section_counter.get(code, 0) + 1
+            sec_num = course_section_counter[code]
+
             day = (section_idx % 6) + 2 # 2 to 7
             start_p, end_p = PERIOD_RANGES[(section_idx % len(PERIOD_RANGES))]
             mask = TimeSlot(schedule_day=day, start_period=start_p, end_period=end_p).compute_mask()
@@ -31,7 +35,7 @@ async def warmup_cache():
             
             sec_dict = {
                 "id": f"sec-{section_idx:03d}",
-                "section_code": f"{code}-{section_idx % 5 + 1:02d}",
+                "section_code": f"{code}-{sec_num:02d}",
                 "course_code": code,
                 "course_name": name,
                 "credits": credits,

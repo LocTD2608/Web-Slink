@@ -32,6 +32,10 @@ from src.backend.adapters.in_bound.controllers.status_controller import (
     router as status_router,
     set_status_cache_gateway
 )
+from src.backend.adapters.in_bound.controllers.demo_controller import (
+    router as demo_router,
+    set_demo_register_usecase
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("main")
@@ -47,9 +51,8 @@ async def lifespan(app: FastAPI):
     rmq_manager = RabbitMQManager.get_instance(config.rabbitmq_url)
     queue_gateway = RabbitMQQueueGateway(rmq_manager)
     
-    # 2. Khởi tạo DB Session và Persistence Gateway cho fallback
-    session = AsyncSessionLocal()
-    persistence_gateway = PostgresRegistrationRepository(session)
+    # 2. Khởi tạo Database Session Factory và Persistence Gateway độc lập
+    persistence_gateway = PostgresRegistrationRepository(session_factory=AsyncSessionLocal)
 
     # 3. Khởi tạo Use Cases
     register_uc = RegisterCourseUseCase(cache_gateway=cache_gateway, queue_gateway=queue_gateway)
@@ -65,8 +68,9 @@ async def lifespan(app: FastAPI):
 
     # 4. Gắn các use cases vào Controllers
     set_curriculum_usecase(curriculum_uc)
-    set_registration_usecases(register_uc, drop_uc)
+    set_registration_usecases(register_uc, drop_uc, persistence_gateway)
     set_status_cache_gateway(cache_gateway)
+    set_demo_register_usecase(register_uc)
 
     # 5. Khởi tạo bảng CSDL nếu chưa có
     try:
@@ -80,7 +84,6 @@ async def lifespan(app: FastAPI):
     
     # Shutdown resources
     logger.info("Shutting down connections...")
-    await session.close()
     await rmq_manager.close()
     await RedisClientManager.get_instance().close()
 
@@ -109,6 +112,7 @@ app.add_middleware(InMemoryAuthMiddleware)
 app.include_router(catalog_router)
 app.include_router(registration_router)
 app.include_router(status_router)
+app.include_router(demo_router)
 
 @app.get("/health")
 async def health_check():

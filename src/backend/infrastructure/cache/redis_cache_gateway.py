@@ -101,7 +101,16 @@ class RedisCacheGateway(ICacheGateway):
         if not raw:
             return None
         try:
-            return json.loads(raw)
+            catalog = json.loads(raw)
+            if isinstance(catalog, list) and catalog:
+                slot_keys = [f"section:{sec['id']}:slots" for sec in catalog]
+                slots = await self.redis.mget(slot_keys)
+                for sec, slot_val in zip(catalog, slots):
+                    if slot_val is not None:
+                        avail = max(0, int(slot_val))
+                        sec["available_slots"] = avail
+                        sec["current_enrolled"] = sec["max_capacity"] - avail
+            return catalog
         except Exception:
             return None
 

@@ -26,3 +26,7 @@ class IPersistenceGateway(ABC):
     @abstractmethod
     async def cancel_registration(self, registration_id: str) -> bool:
         pass
+
+    @abstractmethod
+    async def get_student_registrations(self, student_id: str, semester_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        pass

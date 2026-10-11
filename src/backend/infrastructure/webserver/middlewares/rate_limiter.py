@@ -19,19 +19,22 @@ class TokenBucketRateLimiter(BaseHTTPMiddleware):
         self.lock = Lock()
 
     async def dispatch(self, request: Request, call_next):
-        client_ip = request.client.host if request.client else "unknown"
+        # Ưu tiên giới hạn theo từng sinh viên (X-Student-Id), fallback theo IP nếu không có
+        client_key = request.headers.get("x-student-id") or request.headers.get("X-Student-Id")
+        if not client_key:
+            client_key = request.client.host if request.client else "unknown"
         now = time.time()
 
         with self.lock:
-            elapsed = now - self.last_update[client_ip]
-            self.last_update[client_ip] = now
-            self.tokens[client_ip] = min(self.capacity, self.tokens[client_ip] + elapsed * self.rate)
+            elapsed = now - self.last_update[client_key]
+            self.last_update[client_key] = now
+            self.tokens[client_key] = min(self.capacity, self.tokens[client_key] + elapsed * self.rate)
 
-            if self.tokens[client_ip] < 1.0:
+            if self.tokens[client_key] < 1.0:
                 return JSONResponse(
                     status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                     content={"detail": "Tần suất gửi yêu cầu quá nhanh, vui lòng thử lại sau giây lát."}
                 )
-            self.tokens[client_ip] -= 1.0
+            self.tokens[client_key] -= 1.0
 
         return await call_next(request)

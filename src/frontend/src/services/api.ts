@@ -83,3 +83,40 @@ export async function dropRegistration(
   }
   return await res.json();
 }
+
+export async function fetchStudentRegistrations(studentId: string): Promise<CourseSectionDTO[]> {
+  try {
+    const res = await fetch(`${API_BASE}/registrations/student/${studentId}`);
+    if (!res.ok) {
+      return [];
+    }
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export async function runRaceConditionDemo(): Promise<{
+  target_section: string;
+  total_users: number;
+  slots_allocated: number;
+  rejected_full: number;
+  errors: number;
+  elapsed_seconds: number;
+  throughput_rps: number;
+  zero_overselling: boolean;
+}> {
+  const res = await fetch(`${API_BASE}/demo/race-condition`, { method: 'POST' });
+  if (!res.ok) {
+    throw new Error('Lỗi khi kích hoạt kịch bản mô phỏng tải');
+  }
+  return await res.json();
+}
+
+export async function resetDemoData(): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${API_BASE}/demo/reset-data`, { method: 'POST' });
+  if (!res.ok) {
+    throw new Error('Lỗi khi thiết lập lại dữ liệu');
+  }
+  return await res.json();
+}

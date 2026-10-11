@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, BookOpen, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Search, Filter, BookOpen, Clock, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { CourseSectionDTO } from '../types/registration';
 
 interface CourseCatalogProps {
@@ -7,6 +7,8 @@ interface CourseCatalogProps {
   enrolledSectionIds: Set<string>;
   onRegister: (section: CourseSectionDTO) => void;
   isLoading: boolean;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export const CourseCatalog: React.FC<CourseCatalogProps> = ({
@@ -14,6 +16,8 @@ export const CourseCatalog: React.FC<CourseCatalogProps> = ({
   enrolledSectionIds,
   onRegister,
   isLoading,
+  onRefresh,
+  isRefreshing,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDept, setSelectedDept] = useState('ALL');
@@ -76,22 +80,36 @@ export const CourseCatalog: React.FC<CourseCatalogProps> = ({
             </p>
           </div>
 
-          {/* Ô Tìm Kiếm Tức Thì */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Tìm môn học, mã lớp, GV... (Ctrl+K)"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-academic-secondary focus:border-transparent transition"
-            />
-            {searchTerm && (
+          {/* Ô Tìm Kiếm Tức Thì & Nút Làm Mới */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-72">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm môn học, mã lớp, GV... (Ctrl+K)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-academic-secondary focus:border-transparent transition"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            {onRefresh && (
               <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 active:bg-slate-100 transition shadow-sm whitespace-nowrap disabled:opacity-50"
+                title="Làm mới sĩ số thời gian thực từ Redis"
               >
-                ×
+                <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Làm mới</span>
               </button>
             )}
           </div>

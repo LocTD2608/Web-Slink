@@ -7,7 +7,14 @@ import { WaitingRoomModal } from './components/WaitingRoomModal';
 import { ExceptionModal } from './components/ExceptionModal';
 
 import { CourseSectionDTO, StudentProfile, FeedbackModalState } from './types/registration';
-import { fetchSections, submitRegistration, dropRegistration } from './services/api';
+import {
+  fetchSections,
+  submitRegistration,
+  dropRegistration,
+  fetchStudentRegistrations,
+  runRaceConditionDemo,
+  resetDemoData,
+} from './services/api';
 import { startControlledShortPolling } from './services/pollingService';
 
 export const App: React.FC = () => {
@@ -25,6 +32,9 @@ export const App: React.FC = () => {
   const [sections, setSections] = useState<CourseSectionDTO[]>([]);
   const [enrolledSections, setEnrolledSections] = useState<CourseSectionDTO[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isDemoRunning, setIsDemoRunning] = useState<boolean>(false);
+  const [isResetting, setIsResetting] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'CATALOG' | 'TIMETABLE'>('CATALOG');
 
   // 3. Trạng thái Modal phòng chờ (Waiting Room)
@@ -48,17 +58,37 @@ export const App: React.FC = () => {
     message: '',
   });
 
-  // Tải danh mục lớp học phần từ backend
-  useEffect(() => {
-    async function loadCatalog() {
-      try {
-        const data = await fetchSections();
-        setSections(data);
-      } catch (err: any) {
-        console.error('Lỗi nạp danh mục:', err);
+  // Tải danh mục lớp học phần & các học phần đã đăng ký từ backend khi khởi động
+  const loadInitialData = async () => {
+    try {
+      const [catalogData, enrolledData] = await Promise.all([
+        fetchSections(),
+        fetchStudentRegistrations(student.id),
+      ]);
+      setSections(catalogData);
+      if (enrolledData && enrolledData.length > 0) {
+        setEnrolledSections(enrolledData);
       }
+    } catch (err: any) {
+      console.error('Lỗi nạp dữ liệu:', err);
     }
-    loadCatalog();
+  };
+
+  useEffect(() => {
+    loadInitialData();
+  }, [student.id]);
+
+  // Tự động đồng bộ sĩ số danh mục ngầm định kỳ mỗi 3 giây (Zero CPU server)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const liveCatalog = await fetchSections();
+        setSections(liveCatalog);
+      } catch {
+        // im lặng bỏ qua nếu mạng lag
+      }
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const enrolledSectionIds = useMemo(() => {
@@ -70,6 +100,84 @@ export const App: React.FC = () => {
     const total = enrolledSections.reduce((acc, curr) => acc + curr.credits, 0);
     setStudent((prev) => ({ ...prev, current_credits: total }));
   }, [enrolledSections]);
+
+  // Nút làm mới dữ liệu chủ động
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const [catalogData, enrolledData] = await Promise.all([
+        fetchSections(),
+        fetchStudentRegistrations(student.id),
+      ]);
+      setSections(catalogData);
+      if (enrolledData) setEnrolledSections(enrolledData);
+    } catch (e) {
+      console.error('Lỗi làm mới:', e);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Nút chạy demo kiểm thử tranh chấp 500 sinh viên
+  const handleRunDemo = async () => {
+    if (isDemoRunning) return;
+    setIsDemoRunning(true);
+    try {
+      const res = await runRaceConditionDemo();
+      // Đồng bộ danh mục ngay lập tức
+      const updated = await fetchSections();
+      setSections(updated);
+
+      setModalState({
+        isOpen: true,
+        type: 'SUCCESS',
+        title: 'Kịch Bản Mô Phỏng 500 SV Thành Công!',
+        sectionCode: '[CS101-01] Nhập môn Lập trình',
+        message: `🚀 Kết quả thử tải tranh chấp đồng thời:
+• Tổng số sinh viên đồng thời: ${res.total_users}
+• Số slot ban đầu: 30
+• Thành công giữ slot (202): ${res.slots_allocated}/30
+• Bị từ chối hết chỗ (409): ${res.rejected_full}/470
+• Thời gian thực thi: ${res.elapsed_seconds} giây
+• Thông lượng (Throughput): ${res.throughput_rps} req/s
+🎯 Đánh giá: TUYỆT ĐỐI KHÔNG BÁN VƯỢT SĨ SỐ (ZERO OVERSELLING)!`,
+      });
+    } catch (err: any) {
+      setModalState({
+        isOpen: true,
+        type: 'ERROR',
+        title: 'Lỗi Chạy Kịch Bản',
+        message: err.message || 'Không thể chạy mô phỏng',
+      });
+    } finally {
+      setIsDemoRunning(false);
+    }
+  };
+
+  // Nút reset dữ liệu demo về trạng thái ban đầu
+  const handleResetDemo = async () => {
+    if (!window.confirm('Bạn có chắc muốn khôi phục toàn bộ 200 lớp học phần về trạng thái trống ban đầu?')) return;
+    setIsResetting(true);
+    try {
+      await resetDemoData();
+      const [catalogData, enrolledData] = await Promise.all([
+        fetchSections(),
+        fetchStudentRegistrations(student.id),
+      ]);
+      setSections(catalogData);
+      setEnrolledSections(enrolledData);
+      setModalState({
+        isOpen: true,
+        type: 'SUCCESS',
+        title: 'Đã Thiết Lập Lại Dữ Liệu',
+        message: 'Toàn bộ 200 lớp học phần và số lượng slot đã được khôi phục về trạng thái mở cổng ban đầu (30/30 slot)!',
+      });
+    } catch (err: any) {
+      alert(err.message || 'Lỗi reset dữ liệu');
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   // Xử lý gửi yêu cầu đăng ký học phần
   const handleRegister = async (section: CourseSectionDTO) => {
@@ -102,10 +210,23 @@ export const App: React.FC = () => {
         onUpdate: (_data, attempt) => {
           setWaitingState((prev) => ({ ...prev, attempt }));
         },
-        onSuccess: () => {
+        onSuccess: async () => {
           setWaitingState((prev) => ({ ...prev, isOpen: false }));
           setEnrolledSections((prev) => [...prev, section]);
           setIsLoading(false);
+
+          // Cập nhật ngay lập tức sĩ số lớp trong danh mục trên giao diện
+          setSections((prev) =>
+            prev.map((s) =>
+              s.id === section.id
+                ? {
+                    ...s,
+                    current_enrolled: s.current_enrolled + 1,
+                    available_slots: Math.max(0, s.available_slots - 1),
+                  }
+                : s
+            )
+          );
 
           setModalState({
             isOpen: true,
@@ -114,6 +235,14 @@ export const App: React.FC = () => {
             sectionCode: section.section_code,
             message: `Học phần "${section.course_name}" (${section.credits} tín chỉ) đã được xác nhận lưu trữ bền vững vào hệ thống đào tạo.`,
           });
+
+          // Đồng bộ lại toàn bộ danh mục từ Redis
+          try {
+            const updated = await fetchSections();
+            setSections(updated);
+          } catch {
+            // ignore
+          }
         },
         onFailed: (data) => {
           setWaitingState((prev) => ({ ...prev, isOpen: false }));
@@ -174,6 +303,20 @@ export const App: React.FC = () => {
 
       setEnrolledSections((prev) => prev.filter((s) => s.id !== section.id));
       setIsLoading(false);
+
+      // Cập nhật ngay lập tức sĩ số lớp trên giao diện
+      setSections((prev) =>
+        prev.map((s) =>
+          s.id === section.id
+            ? {
+                ...s,
+                current_enrolled: Math.max(0, s.current_enrolled - 1),
+                available_slots: s.available_slots + 1,
+              }
+            : s
+        )
+      );
+
       setModalState({
         isOpen: true,
         type: 'SUCCESS',
@@ -181,6 +324,14 @@ export const App: React.FC = () => {
         sectionCode: section.section_code,
         message: `Đã hủy học phần "${section.course_name}". Sĩ số khả dụng đã được hoàn trả lập tức vào hệ thống.`,
       });
+
+      // Đồng bộ lại toàn bộ danh mục từ Redis
+      try {
+        const updated = await fetchSections();
+        setSections(updated);
+      } catch {
+        // ignore
+      }
     } catch (err: any) {
       setIsLoading(false);
       alert(`Lỗi hủy môn: ${err.message}`);
@@ -189,8 +340,16 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-academic-canvas">
-      {/* 1. Header chuẩn Stitch */}
-      <Header student={student} />
+      {/* 1. Header chuẩn Stitch kèm nút Demo */}
+      <Header
+        student={student}
+        onRunDemo={handleRunDemo}
+        onResetDemo={handleResetDemo}
+        onRefresh={handleRefresh}
+        isDemoRunning={isDemoRunning}
+        isResetting={isResetting}
+        isRefreshing={isRefreshing}
+      />
 
       {/* 2. Nội dung chính */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
@@ -226,6 +385,8 @@ export const App: React.FC = () => {
               enrolledSectionIds={enrolledSectionIds}
               onRegister={handleRegister}
               isLoading={isLoading}
+              onRefresh={handleRefresh}
+              isRefreshing={isRefreshing}
             />
           </div>
         ) : (

@@ -1,10 +1,28 @@
+import os
+import sys
 import asyncio
 import time
 import httpx
 from collections import Counter
 
-# Test 500 sinh viên tranh nhau 30 chỗ của lớp sec-001
-BASE_URL = "http://localhost:8000" # Hoặc http://localhost nếu qua Nginx
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+
+def detect_base_url():
+    env_url = os.getenv("BASE_URL")
+    if env_url:
+        return env_url
+    for url in ["http://localhost", "http://localhost:8000", "http://localhost:8080"]:
+        try:
+            with httpx.Client(timeout=1.0) as client:
+                r = client.get(f"{url}/health")
+                if r.status_code == 200:
+                    return url
+        except Exception:
+            continue
+    return "http://localhost"
+
+BASE_URL = detect_base_url()
 TOTAL_USERS = 500
 TARGET_SECTION = "sec-001"
 SLOTS = 30
@@ -38,6 +56,7 @@ async def register_student(client: httpx.AsyncClient, user_idx: int):
 async def main():
     print("=" * 70)
     print("🚀 BẮT ĐẦU KIỂM THỬ TRANH CHẤP ĐỒNG THỜI (RACE CONDITION LOAD TEST)")
+    print(f"👉 Target Endpoint: {BASE_URL}")
     print(f"👉 Mục tiêu: {TOTAL_USERS} sinh viên đồng thời tranh {SLOTS} slot của lớp {TARGET_SECTION}")
     print("=" * 70)
 
@@ -63,12 +82,16 @@ async def main():
     print(f"- Tốc độ xử lý (Throughput):     {TOTAL_USERS / elapsed:.1f} req/s")
     print(f"- Thành công giữ slot (200/202):  {success_count} (Kỳ vọng: {SLOTS})")
     print(f"- Bị từ chối hết chỗ (409):       {conflict_count} (Kỳ vọng: {TOTAL_USERS - SLOTS})")
-    print(f"- Lỗi khác (5xx/Network):        {error_count}")
+    print(f"- Lỗi khác (5xx/Network/429):    {error_count}")
+
+    if error_count > 0:
+        error_samples = [res for res in results if res[0] not in [200, 202, 409]][:3]
+        print(f"  Chi tiết lỗi mẫu: {error_samples}")
 
     print("\n🎯 ĐÁNH GIÁ TÍNH TOÀN VẸN (INTEGRITY CHECK):")
     if success_count == SLOTS and conflict_count == (TOTAL_USERS - SLOTS):
         print("✅ [PASSED] TUYỆT ĐỐI KHÔNG BÁN VƯỢT SĨ SỐ (ZERO OVERSELLING)!")
-        print("   Đúng 30 slot được cấp phát thành công, 470 sinh viên nhận thông báo hết chỗ.")
+        print(f"   Đúng {SLOTS} slot được cấp phát thành công, {TOTAL_USERS - SLOTS} sinh viên nhận thông báo hết chỗ.")
     elif success_count <= SLOTS:
         print(f"✅ [PASSED] Không có bán vượt sĩ số ({success_count}/{SLOTS} slots được cấp).")
     else:

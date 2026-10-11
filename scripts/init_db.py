@@ -6,7 +6,7 @@ import random
 # Add root directory to python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.backend.infrastructure.database.db_connection import AsyncSessionLocal, create_tables
+from src.backend.infrastructure.database.db_connection import AsyncSessionLocal, reset_tables
 from src.backend.infrastructure.database.models import (
     StudentModel,
     CourseModel,
@@ -59,8 +59,8 @@ ROOMS = ["A1-201", "A1-305", "B2-102", "B2-401", "C3-101", "C3-205", "E1-502", "
 PERIOD_RANGES = [(1, 3), (4, 6), (7, 9), (10, 12)]
 
 async def init_database():
-    print("Creating tables in PostgreSQL...")
-    await create_tables()
+    print("Resetting and creating tables in PostgreSQL...")
+    await reset_tables()
     
     async with AsyncSessionLocal() as session:
         print("Seeding Semester...")
@@ -95,27 +95,32 @@ async def init_database():
         print("Seeding 200 Course Sections...")
         section_idx = 1
         # Loop through courses to create approximately 200 sections
+        course_section_counter = {}
         while section_idx <= 200:
             for code, name, credits, prereq, dept in COURSES_SPEC:
                 if section_idx > 200:
                     break
                 
-                day = random.randint(2, 7) # Mon -> Sat
-                start_p, end_p = random.choice(PERIOD_RANGES)
+                course_section_counter[code] = course_section_counter.get(code, 0) + 1
+                sec_num = course_section_counter[code]
+
+                day = (section_idx % 6) + 2 # Mon -> Sat (2 to 7)
+                start_p, end_p = PERIOD_RANGES[(section_idx % len(PERIOD_RANGES))]
                 mask = TimeSlot(schedule_day=day, start_period=start_p, end_period=end_p).compute_mask()
+                capacity = 30 if section_idx == 1 else 40
                 
                 section = CourseSectionModel(
                     id=f"sec-{section_idx:03d}",
-                    section_code=f"{code}-{section_idx % 5 + 1:02d}",
+                    section_code=f"{code}-{sec_num:02d}",
                     course_id=course_map[code].id,
                     semester_id="sem-2024-1",
-                    instructor=random.choice(INSTRUCTORS),
-                    classroom=random.choice(ROOMS),
+                    instructor=INSTRUCTORS[section_idx % len(INSTRUCTORS)],
+                    classroom=ROOMS[section_idx % len(ROOMS)],
                     schedule_day=day,
                     start_period=start_p,
                     end_period=end_p,
                     time_mask=mask,
-                    max_capacity=30 if section_idx == 1 else random.choice([30, 40, 50]),
+                    max_capacity=capacity,
                     current_enrolled=0
                 )
                 session.add(section)

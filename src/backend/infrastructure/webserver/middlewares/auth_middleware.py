@@ -16,6 +16,8 @@ class InMemoryAuthMiddleware(BaseHTTPMiddleware):
             path in ["/", "/health", "/docs", "/openapi.json"]
             or path.startswith("/api/v1/sections")
             or path.startswith("/api/v1/registrations/status")
+            or path.startswith("/api/v1/registrations/student")
+            or path.startswith("/api/v1/demo")
         ):
             return await call_next(request)
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime, BigInteger, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime, BigInteger, Numeric, UniqueConstraint
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
 import uuid
@@ -30,6 +30,7 @@ class CourseModel(Base):
     course_name = Column(String(150), nullable=False)
     credits = Column(Integer, nullable=False)
     prerequisite_course_id = Column(String(36), ForeignKey("courses.id"), nullable=True)
+    prerequisite_course = relationship("CourseModel", remote_side=[id])
     department = Column(String(50), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -53,7 +54,7 @@ class CourseSectionModel(Base):
     schedule_day = Column(Integer, nullable=False) # 2 -> 8
     start_period = Column(Integer, nullable=False) # 1 -> 12
     end_period = Column(Integer, nullable=False)   # 1 -> 12
-    time_mask = Column(BigInteger, nullable=False)
+    time_mask = Column(Numeric(38, asdecimal=False), nullable=False)
     max_capacity = Column(Integer, nullable=False)
     current_enrolled = Column(Integer, default=0, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

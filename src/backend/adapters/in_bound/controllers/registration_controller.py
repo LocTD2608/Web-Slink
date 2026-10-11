@@ -13,15 +13,24 @@ from src.backend.core.domain.exceptions.registration_exceptions import (
     DomainException
 )
 
+from typing import Optional, Dict, Any, List
+from src.backend.adapters.out_bound.persistence_gateway import IPersistenceGateway
+
 router = APIRouter(prefix="/api/v1/registrations", tags=["Registrations"])
 
 _register_usecase: Optional[RegisterCourseUseCase] = None
 _drop_usecase: Optional[DropCourseUseCase] = None
+_persistence_gateway: Optional[IPersistenceGateway] = None
 
-def set_registration_usecases(register_uc: RegisterCourseUseCase, drop_uc: DropCourseUseCase):
-    global _register_usecase, _drop_usecase
+def set_registration_usecases(
+    register_uc: RegisterCourseUseCase,
+    drop_uc: DropCourseUseCase,
+    persistence_gw: Optional[IPersistenceGateway] = None
+):
+    global _register_usecase, _drop_usecase, _persistence_gateway
     _register_usecase = register_uc
     _drop_usecase = drop_uc
+    _persistence_gateway = persistence_gw
 
 def get_register_usecase() -> RegisterCourseUseCase:
     assert _register_usecase is not None, "RegisterCourseUseCase not initialized"
@@ -106,3 +115,9 @@ async def drop_course(
     )
 
     return await usecase.execute(command)
+@router.get("/student/{student_id}", response_model=List[Dict[str, Any]])
+async def get_student_registrations(student_id: str, semester_id: Optional[str] = None):
+    """Lấy danh sách các lớp học phần sinh viên đã đăng ký thành công (CONFIRMED)."""
+    if not _persistence_gateway:
+        return []
+    return await _persistence_gateway.get_student_registrations(student_id=student_id, semester_id=semester_id)
