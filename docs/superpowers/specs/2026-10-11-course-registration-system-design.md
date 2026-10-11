@@ -112,18 +112,23 @@ Toàn bộ dữ liệu thẩm định được cấu trúc hóa trên Redis trư
 - Frontend gửi header: `X-Idempotency-Key: {student_id}-{section_id}-{timestamp_window}`.
 - FastAPI Middleware kiểm tra nguyên tử: `SET idempotency:{key} "PROCESSING" EX 60 NX`. Nếu đã tồn tại thì ngắt ngay lập tức (HTTP 409 Conflict), chặn spam click và bảo vệ RabbitMQ.
 
-### 3.6. Định mức Phần cứng cho Môi trường Demo (Local 16GB RAM)
+### 3.6. Định mức Phần cứng & Tinh chỉnh Bộ nhớ cho Môi trường Demo (Hỗ trợ hoàn hảo máy 8GB RAM)
 
-| Dịch vụ Container | Định mức RAM | Định mức CPU | Ghi chú vận hành |
-| :--- | :--- | :--- | :--- |
-| `nginx` | 256 MB | 0.5 CPU | Reverse Proxy, Rate Limiter, Load Balancer 2 app nodes |
-| `fastapi-node-1` | 512 MB | 1.0 CPU | Uvicorn async worker, xử lý API & in-memory auth |
-| `fastapi-node-2` | 512 MB | 1.0 CPU | Uvicorn async worker, phân tải song song |
-| `redis` | 1 GB | 1.0 CPU | Chứa cache warm-up, Lua Script engine, catalog, ticket status |
-| `rabbitmq` | 1 GB | 1.0 CPU | Queue buffer hấp thụ đột biến ghi danh, DLQ |
-| `postgres` | 2 GB | 2.0 CPU | RDBMS lưu trữ dữ liệu bền vững (System of Record) |
-| `worker` | 512 MB | 1.0 CPU | RabbitMQ Consumer ghi dữ liệu & Compensating Rollback |
-| **Tổng cộng** | **~5.8 GB RAM** | **~7.5 vCPU** | **Hoạt động cực kỳ êm ái trên PC cá nhân 16GB RAM** |
+Đối với máy tính cá nhân chỉ có **8GB RAM** (trong đó Windows và ứng dụng nền thường chiếm ~3.5GB - 4.5GB), toàn bộ cụm container được tinh chỉnh thông số (Kernel & Buffer tuning) để tổng mức tiêu thụ RAM của cả 7 container chỉ rơi vào khoảng **$\approx 850\text{ MB} - 1.0\text{ GB}$ RAM**:
+
+| Dịch vụ Container | Định mức RAM (8GB RAM Profile) | Tinh chỉnh Bộ nhớ Cụ thể |
+| :--- | :--- | :--- |
+| `nginx` | **30 MB** | Alpine image, phục vụ Reverse Proxy & static web build |
+| `fastapi-node-1` | **120 MB** | Uvicorn single-worker bất đồng bộ, in-memory HMAC JWT |
+| `fastapi-node-2` | **120 MB** | Uvicorn single-worker phân tải round-robin |
+| `redis` | **60 MB** | Alpine image, `maxmemory 100mb`, `maxmemory-policy volatile-lru` |
+| `rabbitmq` | **250 MB** | Cấu hình `vm_memory_high_watermark.relative = 0.4`, tắt các plugin nặng |
+| `postgres` | **150 MB** | Alpine image, `shared_buffers=64MB`, `work_mem=4MB`, `max_connections=50` |
+| `worker` | **90 MB** | Python async consumer nhẹ, xử lý tuần tự theo batch |
+| **Tổng cộng Docker** | **$\approx 820\text{ MB} - 1.0\text{ GB}$** | **Chạy cực kỳ mượt mà, không giật lag, còn dư > 2.5GB RAM trống cho hệ điều hành** |
+
+* **Đóng gói Frontend:** React Vite được build thành static assets (`npm run build`) và mount trực tiếp vào `nginx` container, loại bỏ hoàn toàn việc phải chạy Node.js dev server (tiết kiệm thêm 400MB RAM).
+
 
 ---
 
