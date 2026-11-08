@@ -10,7 +10,9 @@ export interface CourseSectionDTO {
   schedule_day: number; // 2 -> 7 (Mon -> Sat)
   start_period: number; // 1 -> 12
   end_period: number;
-  time_mask: number;
+  time_slots: number[];
+  registration_id?: string;
+  ticket_id?: string;
   max_capacity: number;
   current_enrolled: number;
   available_slots: number;
@@ -19,16 +21,11 @@ export interface CourseSectionDTO {
 
 export interface RegisterRequestPayload {
   section_id: string;
-  semester_id: string;
-  prerequisite_course_code: string;
-  section_time_mask: number;
-  credits: number;
-  student_id?: string;
 }
 
 export interface TicketStatusDTO {
   ticket_id: string;
-  status: 'PENDING' | 'CONFIRMED' | 'FAILED';
+  status: 'PENDING' | 'CONFIRMED' | 'FAILED' | 'CANCEL_PENDING' | 'CANCELLED';
   reason?: string;
 }
 

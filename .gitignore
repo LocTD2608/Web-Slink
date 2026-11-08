@@ -47,3 +47,7 @@ Thumbs.db
 
 # Superpowers temporary workspace (scratch)
 .superpowers/sdd/*/workspace/
+
+artifacts/metrics/
+artifacts/benchmarks/fixture.json
+src/frontend/audit.json

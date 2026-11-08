@@ -14,6 +14,8 @@ async def warmup_cache(factory=AsyncSessionLocal, redis_url=None):
         if await r.zcard("lab:pending"):
             raise RuntimeError("Pending operations: recover and drain before rebuilding cache")
         sections = await CatalogRepository(factory).sections()
+        from src.backend.infrastructure.cache.context_cache import warm_contexts
+        await warm_contexts(factory, r)
         async with factory() as s:
             regs = (await s.execute(select(RegistrationModel, CourseSectionModel, CourseModel)
                 .join(CourseSectionModel, RegistrationModel.section_id == CourseSectionModel.id)

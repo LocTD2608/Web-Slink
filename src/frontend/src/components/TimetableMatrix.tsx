@@ -55,7 +55,7 @@ export const TimetableMatrix: React.FC<TimetableMatrixProps> = ({ enrolledSectio
       <div className="overflow-x-auto p-4">
         <div className="min-w-[650px] border border-slate-200 rounded-lg overflow-hidden">
           {/* Header Row: Days of Week */}
-          <div className="grid grid-cols-7 bg-slate-100 text-slate-700 font-bold text-xs text-center border-b border-slate-200">
+          <div className="grid grid-cols-8 bg-slate-100 text-slate-700 font-bold text-xs text-center border-b border-slate-200">
             <div className="py-2.5 px-2 border-r border-slate-200 flex items-center justify-center gap-1">
               <Clock className="w-3.5 h-3.5 text-slate-500" />
               <span>Tiết / Giờ</span>
@@ -70,7 +70,7 @@ export const TimetableMatrix: React.FC<TimetableMatrixProps> = ({ enrolledSectio
           {/* Matrix Rows: 12 Periods */}
           <div className="divide-y divide-slate-200">
             {PERIOD_SLOTS.map(({ period, time }) => (
-              <div key={period} className="grid grid-cols-7 text-xs items-stretch min-h-[44px]">
+              <div key={period} className="grid grid-cols-8 text-xs items-stretch min-h-[44px]">
                 {/* Cột Tiết & Giờ */}
                 <div className="bg-slate-50 border-r border-slate-200 p-1.5 flex flex-col justify-center items-center font-mono">
                   <span className="font-bold text-slate-800 text-xs">Tiết {period}</span>

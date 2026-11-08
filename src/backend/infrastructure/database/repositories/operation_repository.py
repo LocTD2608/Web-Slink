@@ -132,11 +132,12 @@ class OperationRepository:
                 raise RegistrationError("NOT_FOUND", 404)
             if reg.student_id != student_id:
                 raise RegistrationError("FORBIDDEN", 403)
-            if reg.ticket_id != expected_ticket_id or reg.status != "CONFIRMED":
+            if reg.ticket_id != expected_ticket_id:
                 raise RegistrationError("STALE_OPERATION")
             sec = await s.scalar(select(CourseSectionModel).where(CourseSectionModel.id == reg.section_id).with_for_update())
-            reg.status = "CANCELLED"
-            sec.current_enrolled -= 1
+            if reg.status == "CONFIRMED":
+                reg.status = "CANCELLED"
+                sec.current_enrolled -= 1
             old = await s.get(OperationModel, expected_ticket_id)
             if old:
                 old.status = "CANCELLED"

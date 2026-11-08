@@ -1,0 +1,32 @@
+sequenceDiagram
+  autonumber
+  actor SV as Sinh viên
+  participant N as Nginx
+  participant A as API
+  participant R as Redis Lua
+  participant Q as RabbitMQ
+  participant W as Worker
+  participant D as PostgreSQL
+  SV->>N: POST đăng ký + JWT + idempotency key
+  N->>A: Request hợp lệ
+  A->>R: Kiểm tra dữ liệu lớp, giữ chỗ và PENDING nguyên tử
+  alt Hết chỗ
+    R-->>A: SECTION_FULL
+    A-->>SV: 409
+  else Giữ chỗ
+    A->>Q: Publish persistent job, publisher confirms
+    Q-->>A: Confirm
+    A-->>SV: 202 và ticket_id
+    Q->>W: Consume
+    W->>D: Transaction idempotent và commit
+    D-->>W: CONFIRMED
+    W->>R: Cập nhật vé CONFIRMED
+    loop Polling có giới hạn
+      SV->>A: GET trạng thái vé + JWT
+      A->>R: Đọc vé, kiểm tra chủ sở hữu
+      A-->>SV: PENDING / CONFIRMED / FAILED
+    end
+    Note over SV,R: Hết thời gian vẫn pending, không tự báo thành công
+  end
+  Note over A,Q: Publish không rõ kết quả: giữ pending để recovery
+  Note over W,D: Redis lỗi sau commit không hủy DB

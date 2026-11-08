@@ -16,7 +16,7 @@ class ReservationTests(unittest.IsolatedAsyncioTestCase):
         keys = [k async for k in self.redis.scan_iter(self.prefix + "*")]
         if keys:
             await self.redis.delete(*keys)
-        await self.redis.aclose()
+        await self.redis.aclose(close_connection_pool=True)
 
     def ctx(self, student="s1", section="sec", slots=None):
         return RegistrationContext(student, section, "sem", 3, 24, None, slots or [81,82,83])

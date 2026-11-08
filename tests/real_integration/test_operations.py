@@ -45,3 +45,11 @@ class OperationsTests(unittest.IsolatedAsyncioTestCase):
             await self.repo.confirm_registration(self.ctx, "t2", "key1", "different")
         with self.assertRaisesRegex(ValueError, "FORBIDDEN"):
             await self.repo.cancel_registration(first.registration_id, "s2", "t1", "d2", "drop2")
+
+    async def test_two_cancel_intents_release_only_once(self):
+        first = await self.repo.confirm_registration(self.ctx, "t1", "key1", "hash")
+        await self.repo.cancel_registration(first.registration_id, "s1", "t1", "d1", "drop1")
+        second = await self.repo.cancel_registration(first.registration_id, "s1", "t1", "d2", "drop2")
+        self.assertEqual(second.status, "CANCELLED")
+        async with self.factory() as s:
+            self.assertEqual((await s.get(CourseSectionModel, "sec")).current_enrolled, 0)

@@ -1,0 +1,20 @@
+flowchart TB
+  U["Sinh viên — phương án chưa triển khai"] --> CDN["CDN nội dung tĩnh"]
+  U --> FW["Firewall / HTTPS"]
+  subgraph DMZ["Vùng DMZ đề xuất"]
+    FW --> LB["Load balancer dự phòng"]
+  end
+  subgraph APP["Vùng ứng dụng private"]
+    LB --> API["Cụm API stateless"]
+    Worker["Workers"]
+  end
+  subgraph DATA["Vùng dữ liệu isolated"]
+    Redis["Redis có phương án failover"]
+    Queue["RabbitMQ có phương án HA"]
+    Master["PostgreSQL primary"]
+    Replica["PostgreSQL replica"]
+  end
+  API --> Redis & Queue
+  Queue --> Worker
+  Worker --> Master
+  Master -.->|"replication"| Replica

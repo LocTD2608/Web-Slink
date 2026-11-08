@@ -8,7 +8,6 @@ log = logging.getLogger(__name__)
 async def run_worker():
     service, _ = build_service()
     metrics = Metrics()
-    server, _ = start_http_server(9101, registry=metrics.registry)
     channel = await service.queue.get_channel()
     await channel.set_qos(prefetch_count=20)
     async def consume(message):
@@ -37,6 +36,7 @@ async def run_worker():
     for name in ("registration_queue", "drop_queue"):
         queue = await channel.get_queue(name)
         await queue.consume(consume)
+    server, _ = start_http_server(9101, registry=metrics.registry)
     try:
         await asyncio.Future()
     finally:

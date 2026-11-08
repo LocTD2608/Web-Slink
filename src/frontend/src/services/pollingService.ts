@@ -34,7 +34,7 @@ export function startControlledShortPolling(options: PollingOptions): () => void
       const data = await fetchRegistrationStatus(ticketId);
       if (onUpdate) onUpdate(data, attempt);
 
-      if (data.status === 'CONFIRMED') {
+      if (data.status === 'CONFIRMED' || data.status === 'CANCELLED') {
         onSuccess(data);
         return;
       } else if (data.status === 'FAILED') {
@@ -48,9 +48,7 @@ export function startControlledShortPolling(options: PollingOptions): () => void
     if (attempt >= maxAttempts) {
       if (onTimeout) {
         onTimeout();
-      } else {
-        // Fallback: coi như đã tiếp nhận thành công trong hàng đợi
-        onSuccess({ ticket_id: ticketId, status: 'CONFIRMED' });
+
       }
       return;
     }

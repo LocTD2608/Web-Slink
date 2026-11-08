@@ -1,168 +1,20 @@
-# Hệ Thống Đăng Ký Học Phần Trực Tuyến (Quy Mô 3.000 Sinh Viên)
+﻿# Hệ thống đăng ký học phần — lab thực hành
 
-[![Clean Architecture](https://img.shields.io/badge/Architecture-Clean%20%2F%20Screaming-blue.svg)](docs/superpowers/specs/2026-10-11-course-registration-system-design.md)
-[![Python 3.12](https://img.shields.io/badge/Backend-Python%203.12%20FastAPI-green.svg)](src/backend/)
-[![React 18](https://img.shields.io/badge/Frontend-React%2018%20Vite%20TypeScript-purple.svg)](src/frontend/)
-[![Docker Compose](https://img.shields.io/badge/Deploy-Docker%20Compose%207%20Services-blueviolet.svg)](docker-compose.yml)
-[![UI/UX Stitch](https://img.shields.io/badge/Design-Google%20Stitch%201242719912165769412-orange.svg)](https://stitch.withgoogle.com/projects/1242719912165769412)
+Ứng dụng React + FastAPI, PostgreSQL, Redis Lua và RabbitMQ. Bản nâng cấp có hai chế độ đăng ký để đo đối chứng, trạng thái bất đồng bộ đúng theo kết quả DB, cùng Prometheus/Grafana/RedisInsight.
 
-Đề tài tốt nghiệp/nghiên cứu kỹ thuật hạ tầng xây dựng **Hệ thống Đăng ký học phần trực tuyến chịu tải cao** phục vụ **3.000 sinh viên đồng thời (CCU)** trong đợt mở cổng tín chỉ (Flash Crowd). Dự án được tổ chức theo mô hình **Monorepo** kết hợp **Clean Architecture** và **Package by Feature**, giải quyết triệt để bài toán **Race Condition (Không bán vượt sĩ số - Zero Overselling)**, **Nút thắt I/O cơ sở dữ liệu** và **Quá tải tài nguyên**.
+- Đăng ký, hủy và đăng ký lại; kiểm tra chủ sở hữu JWT, tiên quyết, tín chỉ, trùng lịch.
+- Lua giữ chỗ và ticket nguyên tử; worker xử lý idempotent, có recovery.
+- Frontend dùng sinh viên demo, lưu ticket khi tải lại trang; timeout không báo thành công.
+- Benchmark 3.000 yêu cầu tranh 60 chỗ; kịch bản 3.000 VUs riêng.
+- Dashboard provision sẵn: API, worker, queue, Redis, PostgreSQL, CPU/RAM/network container.
 
----
+~~~powershell
+./scripts/lab.ps1 -Action Start
+~~~
 
-## 1. Cấu Trúc Thư Mục Monorepo
+Ứng dụng: http://localhost:8088. Grafana: http://localhost:3001 (admin / lab-admin). RedisInsight: http://localhost:8001.
 
-```
-course-registration-system/
-├── docs/                                  # Tài liệu phân tích và thiết kế hạ tầng
-│   ├── 01_yeu_cau_va_tai_trong/           # 1.1_mo_hinh_tai_trong.md, 1.2_chi_so_hieu_nang.md
-│   ├── 02_phuong_an_ha_tang/              # 2.1_so_do_tong_the_ha_tang.md, 2.2_cau_hinh_may_chu.md, 2.3_giai_phap_mo_rong.md
-│   ├── 03_phan_tich_hoat_dong/            # 3.1_vong_doi_yeu_cau.md, 3.2_mo_hinh_tien_trinh.md, 3.3_ket_noi_mang.md
-│   ├── 04_thiet_ke_luu_tru/               # 4.1_mo_hinh_du_lieu_rdbms.md, 4.2_chien_luoc_caching.md, 4.3_sao_chep_va_phan_vung.md
-│   └── 05_giai_phap_chong_qua_tai/        # 5.1_hang_doi_va_dem_tai.md, 5.2_kiem_soat_dong_thoi.md, 5.3_rate_limiting_va_chia_dot.md
-│
-├── infra/                                 # Infrastructure as Code & Cấu hình môi trường
-│   ├── docker/                            # Nginx reverse proxy, App Dockerfile
-│   ├── terraform/                         # Terraform modules cho báo cáo lý thuyết
-│   ├── k8s/                               # Kubernetes manifests (Ingress, Deployments, HPA)
-│   └── monitoring/                        # Prometheus metrics & Grafana dashboard mẫu
-│
-├── src/backend/                           # Mã nguồn Backend Python 3.12 (Clean Architecture)
-│   ├── core/                              # Lớp trung tâm độc lập ("The Inside")
-│   │   ├── domain/entities/               # Student, CourseSection, Registration, TimeSlot
-│   │   ├── domain/exceptions/             # SectionFullException, ScheduleConflictException...
-│   │   └── usecases/                      # RegisterCourse, DropCourse, ViewCurriculum
-│   ├── adapters/                          # Lớp chuyển đổi (Ports & Adapters)
-│   │   ├── in_bound/controllers/          # Catalog, Registration, Status Polling APIs
-│   │   ├── in_bound/consumers/            # RabbitMQ Consumer & Compensating Rollback
-│   │   └── out_bound/                     # ICacheGateway, IQueueGateway, IPersistenceGateway
-│   ├── infrastructure/                    # Frameworks, DB, Redis Lua, RabbitMQ
-│   │   ├── webserver/middlewares/         # In-memory JWT Auth, Idempotency, Rate Limiter
-│   │   ├── database/                      # SQLAlchemy Async, Models, Postgres Repositories
-│   │   ├── cache/                         # Redis Client, Lua Scripting Engine
-│   │   └── messaging/                     # RabbitMQ aio-pika Producer/Consumer & DLQ
-│   ├── worker.py                          # Tiến trình Background Consumer độc lập
-│   └── main.py                            # Điểm lắp ráp Dependency Injection & Server
-│
-├── src/frontend/                          # Giao diện Sinh viên (React 18 + Vite + TypeScript)
-│   ├── src/components/                    # Header, CourseCatalog, TimetableMatrix, Modals
-│   ├── src/services/                      # API Client, Controlled Short Polling Service
-│   └── src/types/                         # Data Transfer Objects & Interfaces
-│
-├── tests/                                 # Kịch bản kiểm thử tự động
-│   ├── unit/                              # Kiểm thử nghiệp vụ Domain & Use Cases (10 tests)
-│   ├── integration/                       # Kiểm thử Redis Lua & API Flow (9 tests)
-│   └── load_testing/                      # Kịch bản kiểm thử tải cao điểm với k6
-│       ├── tokens.csv                     # 3.000 JWT tokens tĩnh (Pre-warmed)
-│       └── scenarios/                     # race_condition_test.js, 3000_concurrent_users.js
-│
-├── scripts/                               # Tiện ích tự động hóa
-│   ├── init_db.py                         # Sinh dữ liệu mẫu: 3.000 SV, 200 lớp học phần
-│   ├── generate_tokens.py                 # Sinh sẵn 3.000 JWT tokens
-│   └── warmup_cache.py                    # Nạp toàn bộ dữ liệu vào Redis Cache
-│
-├── docker-compose.yml                     # Cụm Docker 7 dịch vụ chạy mượt trên máy 16GB RAM
-└── README.md
-```
+Đọc [hướng dẫn chạy và đo tải](docs/lab/README.md), [kịch bản demo 90 giây](docs/lab/demo-90-seconds.md), [thiết kế được duyệt](docs/superpowers/specs/2026-11-07-observable-registration-lab-design.md).
 
----
+Số liệu đo nằm trong artifacts/benchmarks khi chạy. Không coi mục tiêu 3.000 VUs là kết quả đã chứng minh nếu không có artifact tương ứng. Các tài liệu phân tích ban đầu trong docs/01_* đến docs/05_* và spec tháng 10 mô tả ý tưởng cũ; docs/lab là hướng dẫn hiện hành. Đây là lab trên một máy, chưa phải hệ thống production HA hoặc cổng SSO trường học.
 
-## 2. Các Trụ Cột Đột Phá Kỹ Thuật
-
-1. **Redis Atomic Lua Script CAS:**
-   * Thẩm định đồng thời: Kiểm tra sinh viên đã đăng ký $\rightarrow$ Môn tiên quyết $\rightarrow$ Mặt nạ thời gian 84-bit $\rightarrow$ Hạn mức tín chỉ $\rightarrow$ Trừ slot nguyên tử.
-   * Thực thi hoàn toàn trong RAM trong $< 2\text{ms}$, triệt tiêu $100\%$ Race Condition, bảo đảm **Zero Overselling**.
-2. **Cơ Chế Tìm Kiếm Danh Mục Client-Side Filter (3.500 QPS):**
-   * Nạp toàn bộ 200 lớp học phần vào key Redis `catalog:active_sections` ($\approx 100\text{KB}$ JSON).
-   * Frontend nhận mảng về và thực hiện tìm kiếm, lọc theo khoa/thứ trên bộ nhớ trình duyệt, loại bỏ toàn bộ các câu lệnh `SELECT ... WHERE LIKE` đè bẹp DB.
-3. **Giao Dịch Bồi Hoàn (Compensating Rollback Transaction):**
-   * Nếu Worker ghi DB thất bại sau 3 lần Retry, Worker tự động hoàn trả slot (`INCR`) và số tín chỉ trên Redis, đồng thời định tuyến message sang `registration_dlq`.
-4. **Controlled Short Polling:**
-   * Sinh viên nhận `202 Accepted` kèm `ticket_id`, Frontend thăm dò `GET /api/v1/registrations/status/{ticket_id}` mỗi $1\text{s}$ (tối đa 3 lần). Độ trễ $< 2\text{ms}$, ổn định $100\%$, không bao giờ bị đứt socket hay nghẽn buffer Nginx.
-5. **Pre-warmed Tokens Chống Nghẽn Bcrypt:**
-   * 3.000 tokens sinh sẵn trong `tokens.csv`; tầng Auth của FastAPI chỉ giải mã chữ ký HMAC-SHA256 trong bộ nhớ, không băm Bcrypt khi test tải.
-
----
-
-## 3. Hướng Dẫn Cài Đặt & Chạy Demo
-
-### Yêu cầu tiên quyết:
-- Python 3.12+
-- Node.js v18+ & npm
-- Docker & Docker Compose (cho môi trường container)
-
-### Cách 1: Khởi chạy toàn bộ hệ sinh thái bằng Docker Compose (Khuyến nghị cho Demo)
-```bash
-# 1. Khởi động 7 dịch vụ (Nginx, 2 FastAPI nodes, Redis, RabbitMQ, PostgreSQL, Worker)
-docker compose up -d
-
-# 2. Sinh dữ liệu mẫu 3.000 sinh viên và 200 lớp học phần vào PostgreSQL
-python scripts/init_db.py
-
-# 3. Nạp trước dữ liệu vào Redis Cache (Warm-up Pipeline)
-python scripts/warmup_cache.py
-
-# 4. Mở trình duyệt truy cập ứng dụng sinh viên
-http://localhost
-```
-
-### Cách 2: Khởi chạy môi trường phát triển cục bộ (Local Development)
-
-**Bước 1: Cài đặt và chạy Backend**
-```bash
-# Kích hoạt virtualenv
-.venv\Scripts\activate   # Trên Windows
-# source .venv/bin/activate # Trên Linux/Mac
-
-# Chạy FastAPI Backend
-uvicorn src.backend.main:app --host 0.0.0.0 --port 8000 --reload
-```
-
-**Bước 2: Khởi chạy Frontend React**
-```bash
-cd src/frontend
-npm install
-npm run dev
-# Mở trình duyệt tại http://localhost:3000
-```
-
----
-
-## 4. Kiểm Thử Hệ Thống (Automated Testing)
-
-### 4.1. Chạy Bộ Kiểm Thử Unit & Integration (19 tests)
-```bash
-python -m unittest discover -s tests -t .
-```
-Kết quả kỳ vọng: **19/19 tests PASSED** (Kiểm tra nghiệp vụ Domain, Mặt nạ thời gian 84-bit, Ngoại lệ hết chỗ, Cổng Redis Lua, API Endpoints, Idempotency Middleware).
-
-### 4.2. Chạy Kiểm Thử Tải Cao Điểm Với k6
-
-**Kịch bản 1: Tranh chấp đồng thời 500 sinh viên vào 1 lớp 30 chỗ (Race Condition)**
-```bash
-k6 run tests/load_testing/scenarios/race_condition_test.js
-```
-* **Kỳ vọng:** Đúng 30 requests nhận HTTP 202/200, 470 requests nhận HTTP 409 (Hết chỗ), Redis và DB ghi nhận chính xác 30/30 slot.
-
-**Kịch bản 2: Mô phỏng 3.000 sinh viên đồng thời truy cập trong 5 phút**
-```bash
-k6 run tests/load_testing/scenarios/3000_concurrent_users.js
-```
-* **Kỳ vọng:** $p95 \le 150\text{ms}$ cho API đọc, $p95 \le 250\text{ms}$ cho API ghi, tỉ lệ lỗi hệ thống $\le 0.01\%$.
-
----
-
-## 5. Định Mức Tiêu Thụ RAM Khi Chạy Thực Tế (Local PC 16GB RAM)
-
-| Dịch vụ | RAM thực tế lúc chạy thường | RAM thực tế lúc dồn tải k6 đỉnh |
-| :--- | :--- | :--- |
-| Nginx Reverse Proxy | ~20 MB | ~60 MB |
-| FastAPI Node 1 + Node 2 | ~200 MB | ~360 MB |
-| Redis In-Memory | ~40 MB | ~120 MB |
-| RabbitMQ Broker | ~120 MB | ~300 MB |
-| PostgreSQL Database | ~80 MB | ~450 MB |
-| Worker Process | ~80 MB | ~150 MB |
-| k6 Runner (3.000 VUs) | — | ~1.2 GB |
-| **TỔNG CỘNG HỆ THỐNG** | **~540 MB** | **~2.6 GB - 3.2 GB RAM** |
-
-Hệ thống hoạt động hoàn toàn mát mẻ, êm ái trên bất kỳ laptop hoặc máy tính cá nhân 16GB RAM nào!

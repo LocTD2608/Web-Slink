@@ -28,7 +28,6 @@ def create_app(lab_mode=None, secret=None):
         from src.backend.infrastructure.database.db_connection import engine, create_tables
         if not lab and signing_key == "super-secret-course-reg-key-2026":
             raise RuntimeError("Set JWT_SECRET outside LAB_MODE")
-        await create_tables()
         app.state.service, app.state.catalog = build_service()
         yield
         await app.state.service.queue.close()

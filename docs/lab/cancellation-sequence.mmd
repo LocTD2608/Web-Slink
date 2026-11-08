@@ -1,0 +1,18 @@
+sequenceDiagram
+  actor SV as Sinh viên
+  participant A as API
+  participant R as Redis
+  participant Q as RabbitMQ
+  participant W as Worker
+  participant D as PostgreSQL
+  SV->>A: DELETE registration_id thật + JWT + idempotency key
+  A->>D: Kiểm tra chủ sở hữu và CONFIRMED
+  A->>R: Tạo CANCEL_PENDING, giữ expected ticket
+  A->>Q: Publish drop_queue
+  A-->>SV: 202, chưa trả chỗ
+  Q->>W: Consume cancel job
+  W->>D: Khóa, kiểm tra ticket, CANCELLED, giảm enrolled một lần
+  W->>R: Lua trả chỗ chỉ khi ticket còn sở hữu
+  W->>R: Vé CANCELLED
+  SV->>A: Poll trạng thái
+  A-->>SV: CANCELLED, tải lại danh sách

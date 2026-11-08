@@ -1,0 +1,24 @@
+flowchart TB
+  SV["Browser / k6"] -->|"HTTP localhost:8088"| LB["Nginx, rate limit, least connections"]
+  subgraph APP["Docker app network — một máy"]
+    LB --> A1["FastAPI 1"]
+    LB --> A2["FastAPI 2"]
+    G["Grafana :3001"] --> P["Prometheus :9090"]
+  end
+  subgraph DATA["Docker data network — internal"]
+    R["Redis standalone / Lua"]
+    Q["RabbitMQ"]
+    W["Worker, hai queues"]
+    DB["PostgreSQL"]
+    EX["Redis và Postgres exporters"]
+  end
+  A1 & A2 -->|"redis_queue: giữ chỗ"| R
+  A1 & A2 -->|"redis_queue: publish"| Q
+  A1 & A2 -->|"postgres: transaction trực tiếp"| DB
+  Q --> W
+  W --> DB
+  W -->|"trạng thái vé"| R
+  P --> A1 & A2 & W & EX
+  P -->|"15692 metrics"| Q
+  SV -->|"k6 remote write"| P
+  RI["RedisInsight :8001"] --> R
