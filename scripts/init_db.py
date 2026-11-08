@@ -6,12 +6,12 @@ import random
 # Add root directory to python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.backend.infrastructure.database.db_connection import AsyncSessionLocal, reset_tables
+from src.backend.infrastructure.database.db_connection import AsyncSessionLocal, create_tables
 from src.backend.infrastructure.database.models import (
     StudentModel,
     CourseModel,
     SemesterModel,
-    CourseSectionModel
+    CourseSectionModel, CompletedCourseModel
 )
 from src.backend.core.domain.entities.time_slot import TimeSlot
 
@@ -59,10 +59,12 @@ ROOMS = ["A1-201", "A1-305", "B2-102", "B2-401", "C3-101", "C3-205", "E1-502", "
 PERIOD_RANGES = [(1, 3), (4, 6), (7, 9), (10, 12)]
 
 async def init_database():
-    print("Resetting and creating tables in PostgreSQL...")
-    await reset_tables()
+    await create_tables()
     
     async with AsyncSessionLocal() as session:
+        if await session.get(SemesterModel, "sem-2024-1"):
+            print("Demo data already exists; preserved.")
+            return
         print("Seeding Semester...")
         semester = SemesterModel(
             id="sem-2024-1",
@@ -143,6 +145,10 @@ async def init_database():
             await session.flush()
             print(f"  Flushed students up to {b + BATCH_SIZE}...")
 
+        await session.flush()
+        for i in range(1, 3001):
+            for code in ("CS101", "MATH101", "ENG101"):
+                session.add(CompletedCourseModel(student_id=f"std-{i:04d}", course_code=code))
         await session.commit()
         print("Database initialization successfully completed! (3.000 Students, 30 Courses, 200 Sections)")
 

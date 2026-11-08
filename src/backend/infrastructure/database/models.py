@@ -1,9 +1,35 @@
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime, BigInteger, Numeric, UniqueConstraint
+from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, DateTime, BigInteger, Numeric, UniqueConstraint, JSON, Float
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
 import uuid
 
 Base = declarative_base()
+
+class CompletedCourseModel(Base):
+    __tablename__ = "completed_courses"
+    student_id = Column(String(36), ForeignKey("students.id"), primary_key=True)
+    course_code = Column(String(20), primary_key=True)
+
+class OperationModel(Base):
+    __tablename__ = "operations"
+    ticket_id = Column(String(64), primary_key=True)
+    student_id = Column(String(36), nullable=False, index=True)
+    section_id = Column(String(36), nullable=False)
+    kind = Column(String(20), nullable=False)
+    status = Column(String(24), nullable=False)
+    idempotency_key = Column(String(160), unique=True, nullable=False)
+    payload_hash = Column(String(64), nullable=False)
+    registration_id = Column(String(36), nullable=True)
+    reason = Column(String(160), default="", nullable=False)
+    generation = Column(Integer, default=0, nullable=False)
+    created_at = Column(Float, nullable=False)
+    payload = Column(JSON, nullable=False)
+
+class BenchmarkRunModel(Base):
+    __tablename__ = "benchmark_runs"
+    id = Column(String(36), primary_key=True)
+    generation = Column(Integer, nullable=False, default=1)
+    accepting = Column(Boolean, nullable=False, default=False)
 
 def generate_uuid() -> str:
     return str(uuid.uuid4())

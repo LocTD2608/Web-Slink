@@ -13,6 +13,12 @@ class TimeSlot:
     start_period: int
     end_period: int
 
+    def period_indices(self) -> list[int]:
+        if not 2 <= self.schedule_day <= 8 or not 1 <= self.start_period <= self.end_period <= 12:
+            raise ValueError("Invalid day or periods")
+        offset = (self.schedule_day - 2) * 12
+        return list(range(offset + self.start_period - 1, offset + self.end_period))
+
     def compute_mask(self) -> int:
         if not (2 <= self.schedule_day <= 8):
             raise ValueError(f"schedule_day must be between 2 and 8, got {self.schedule_day}")

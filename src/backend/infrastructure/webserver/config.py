@@ -2,6 +2,8 @@ import os
 from pydantic import BaseModel
 
 class AppConfig(BaseModel):
+    lab_mode: bool = os.getenv("LAB_MODE", "false").lower() == "true"
+    registration_mode: str = os.getenv("REGISTRATION_MODE", "redis_queue")
     app_name: str = "Hệ thống Đăng ký Học phần Trực tuyến"
     environment: str = os.getenv("ENV", "development")
     jwt_secret: str = os.getenv("JWT_SECRET", "super-secret-course-reg-key-2026")

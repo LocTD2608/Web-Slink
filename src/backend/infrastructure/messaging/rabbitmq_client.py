@@ -1,3 +1,4 @@
+import asyncio
 import os
 import json
 from typing import Optional, Dict, Any
@@ -9,6 +10,7 @@ class RabbitMQManager:
     _channel: Optional[aio_pika.abc.AbstractRobustChannel] = None
 
     def __init__(self, amqp_url: Optional[str] = None):
+        self._lock = asyncio.Lock()
         self.amqp_url = amqp_url or os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
 
     @classmethod
@@ -17,11 +19,15 @@ class RabbitMQManager:
             cls._instance = cls(amqp_url)
         return cls._instance
 
-    async def get_channel(self) -> aio_pika.abc.AbstractRobustChannel:
+    async def get_channel(self):
+        async with self._lock:
+            return await self._connect_channel()
+
+    async def _connect_channel(self) -> aio_pika.abc.AbstractRobustChannel:
         if self._connection is None or self._connection.is_closed:
             self._connection = await aio_pika.connect_robust(self.amqp_url)
-            self._channel = await self._connection.channel()
-            # Khởi tạo các hàng đợi cơ sở
+            self._channel = await self._connection.channel(publisher_confirms=True)
+            # Khá»Ÿi táº¡o cÃ¡c hÃ ng Ä‘á»£i cÆ¡ sá»Ÿ
             await self._channel.declare_queue("registration_queue", durable=True)
             await self._channel.declare_queue("drop_queue", durable=True)
             await self._channel.declare_queue("registration_dlq", durable=True)
@@ -34,7 +40,7 @@ class RabbitMQManager:
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
             content_type="application/json"
         )
-        await channel.default_exchange.publish(message, routing_key=queue_name)
+        await channel.default_exchange.publish(message, routing_key=queue_name, mandatory=True, timeout=10)
 
     async def close(self) -> None:
         if self._connection and not self._connection.is_closed:
