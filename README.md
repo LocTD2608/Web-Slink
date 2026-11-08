@@ -14,6 +14,8 @@
 
 Ứng dụng: http://localhost:8088. Grafana: http://localhost:3001 (admin / lab-admin). RedisInsight: http://localhost:8001.
 
+[Kết quả đo thực tế 08/11/2026](docs/lab/measured-results.md): flash 3.000 lượt không vượt 60 chỗ; tải duy trì 300 VUs đạt, 3.000 VUs chưa ổn định trên cấu hình hiện tại.
+
 Đọc [hướng dẫn chạy và đo tải](docs/lab/README.md), [kịch bản demo 90 giây](docs/lab/demo-90-seconds.md), [thiết kế được duyệt](docs/superpowers/specs/2026-11-07-observable-registration-lab-design.md).
 
 Đọc [kết quả kiểm thử và quyết định triển khai](docs/lab/implementation-review.md). Số liệu đo nằm trong artifacts/benchmarks khi chạy. Không coi mục tiêu 3.000 VUs là kết quả đã chứng minh nếu không có artifact tương ứng. Các tài liệu phân tích ban đầu trong docs/01_* đến docs/05_* và spec tháng 10 mô tả ý tưởng cũ; docs/lab là hướng dẫn hiện hành. Đây là lab trên một máy, chưa phải hệ thống production HA hoặc cổng SSO trường học.

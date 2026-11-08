@@ -1,0 +1,13 @@
+{
+  "confirmed": 10,
+  "enrolled": 10,
+  "mode": "redis_queue",
+  "run_id": "warmup-redis_queue",
+  "slots": 50,
+  "owners": 10,
+  "pending": 0,
+  "queues_empty": true,
+  "credits_valid": true,
+  "periods_valid": true,
+  "valid": true
+}

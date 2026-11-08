@@ -1,0 +1,10 @@
+{
+  "confirmed": 10,
+  "enrolled": 10,
+  "mode": "redis_queue",
+  "run_id": "smoke-redis_queue",
+  "slots": 50,
+  "owners": 10,
+  "pending": 0,
+  "valid": true
+}

@@ -1,0 +1,373 @@
+{
+  "date": "2026-11-08",
+  "cpu": "AMD Ryzen 7 4800H",
+  "logical_processors": 16,
+  "host_ram_bytes": 16558178304,
+  "environment": "Windows Docker Desktop; original course-reg stack remained running; dedicated test stack stopped during load",
+  "flash": "500 VUs x 6 iterations; warmup per mode; 3 alternating measured runs per mode",
+  "sustained": "30s ramp, 60s hold, 10s down; 1-2s think time; every iteration reads catalog, 20% also register",
+  "changes": "Flash and initial sustained used nginx worker_connections=4096. Subsequent sustained used 8192; all CPU/RAM limits unchanged. Browser signup/cancel checks ran during the 300 VU test.",
+  "sampling_note": "Resource peaks are sampled docker stats via Prometheus, not instantaneous maxima; measurement window ends at summary file modification time.",
+  "runs": [
+    {
+      "artifact": "postgres-1-summary.json",
+      "sha256": "c3d465180bb4cfe37bdb40509f4cdfc5b2ba477177449332d330ac3c04e9318f",
+      "approx_finished_utc": "2026-11-08T06:22:57.662119+00:00",
+      "duration_seconds": 44.804207593,
+      "resources_sampled_peak": {
+        "lab_container_cpu_cores": {
+          "course-lab-fastapi-node-1-1": 0.9894,
+          "course-lab-fastapi-node-2-1": 0.9727,
+          "course-lab-grafana-1": 0.008,
+          "course-lab-nginx-1": 0.060700000000000004,
+          "course-lab-node-exporter-1": 0.0055000000000000005,
+          "course-lab-postgres-1": 0.5359,
+          "course-lab-postgres-exporter-1": 0.028399999999999998,
+          "course-lab-prometheus-1": 0.025,
+          "course-lab-rabbitmq-1": 1.0029000000000001,
+          "course-lab-redis-1": 0.043899999999999995,
+          "course-lab-redis-exporter-1": 0.0304,
+          "course-lab-redisinsight-1": 0.0,
+          "course-lab-worker-1": 0.0552,
+          "course-lab-k6-run-341a21fea3e3": 0.3071
+        },
+        "lab_container_memory_bytes": {
+          "course-lab-fastapi-node-1-1": 137363456.0,
+          "course-lab-fastapi-node-2-1": 102529761.28,
+          "course-lab-grafana-1": 88877301.76,
+          "course-lab-nginx-1": 16577986.56,
+          "course-lab-node-exporter-1": 7843348.48,
+          "course-lab-postgres-1": 204682035.2,
+          "course-lab-postgres-exporter-1": 9367977.984,
+          "course-lab-prometheus-1": 53204746.24,
+          "course-lab-rabbitmq-1": 215377510.4,
+          "course-lab-redis-1": 10408165.376,
+          "course-lab-redis-exporter-1": 11723079.68,
+          "course-lab-redisinsight-1": 92620718.08,
+          "course-lab-worker-1": 65410170.88,
+          "course-lab-k6-run-341a21fea3e3": 275460915.2
+        }
+      }
+    },
+    {
+      "artifact": "postgres-2-summary.json",
+      "sha256": "0c3e07f802f392616ed6a2ff47314675a9b5785d08210ca22703c93854f02632",
+      "approx_finished_utc": "2026-11-08T06:25:13.447919+00:00",
+      "duration_seconds": 52.376233189,
+      "resources_sampled_peak": {
+        "lab_container_cpu_cores": {
+          "course-lab-fastapi-node-1-1": 1.0087000000000002,
+          "course-lab-fastapi-node-2-1": 1.0133,
+          "course-lab-grafana-1": 0.0482,
+          "course-lab-nginx-1": 0.065,
+          "course-lab-node-exporter-1": 0.0043,
+          "course-lab-postgres-1": 1.1787999999999998,
+          "course-lab-postgres-exporter-1": 0.032400000000000005,
+          "course-lab-prometheus-1": 0.0915,
+          "course-lab-rabbitmq-1": 0.9947,
+          "course-lab-redis-1": 0.1176,
+          "course-lab-redis-exporter-1": 0.0472,
+          "course-lab-redisinsight-1": 0.0001,
+          "course-lab-worker-1": 0.0662,
+          "course-lab-k6-run-b250f2b4a7b3": 0.3191
+        },
+        "lab_container_memory_bytes": {
+          "course-lab-fastapi-node-1-1": 148478361.6,
+          "course-lab-fastapi-node-2-1": 102382960.64,
+          "course-lab-grafana-1": 108737331.2,
+          "course-lab-nginx-1": 16011755.52,
+          "course-lab-node-exporter-1": 8371830.784,
+          "course-lab-postgres-1": 201012019.2,
+          "course-lab-postgres-exporter-1": 10420748.288,
+          "course-lab-prometheus-1": 77311508.48,
+          "course-lab-rabbitmq-1": 217789235.2,
+          "course-lab-redis-1": 9912188.928,
+          "course-lab-redis-exporter-1": 12215910.4,
+          "course-lab-redisinsight-1": 92620718.08,
+          "course-lab-worker-1": 60314091.52,
+          "course-lab-k6-run-b250f2b4a7b3": 276928921.6
+        }
+      }
+    },
+    {
+      "artifact": "postgres-3-summary.json",
+      "sha256": "e9df9ae7ee8a7b2caea6ae0b2fd09555d771acd23760711e674e925cc73e3fdf",
+      "approx_finished_utc": "2026-11-08T06:26:18.350803+00:00",
+      "duration_seconds": 46.683161521,
+      "resources_sampled_peak": {
+        "lab_container_cpu_cores": {
+          "course-lab-fastapi-node-1-1": 0.9834999999999999,
+          "course-lab-fastapi-node-2-1": 0.981,
+          "course-lab-grafana-1": 0.1613,
+          "course-lab-nginx-1": 0.06,
+          "course-lab-node-exporter-1": 0.005600000000000001,
+          "course-lab-postgres-1": 0.5771000000000001,
+          "course-lab-postgres-exporter-1": 0.0363,
+          "course-lab-prometheus-1": 0.011000000000000001,
+          "course-lab-rabbitmq-1": 0.9881,
+          "course-lab-redis-1": 0.0467,
+          "course-lab-redis-exporter-1": 0.034,
+          "course-lab-redisinsight-1": 0.0003,
+          "course-lab-worker-1": 0.0558,
+          "course-lab-k6-run-b10e9c7e8537": 0.3759
+        },
+        "lab_container_memory_bytes": {
+          "course-lab-fastapi-node-1-1": 102519275.52,
+          "course-lab-fastapi-node-2-1": 104207482.88,
+          "course-lab-grafana-1": 121005670.4,
+          "course-lab-nginx-1": 15948840.96,
+          "course-lab-node-exporter-1": 8384413.696,
+          "course-lab-postgres-1": 210449203.2,
+          "course-lab-postgres-exporter-1": 10317987.84,
+          "course-lab-prometheus-1": 78003568.64,
+          "course-lab-rabbitmq-1": 217055232.0,
+          "course-lab-redis-1": 12310282.24,
+          "course-lab-redis-exporter-1": 11377049.6,
+          "course-lab-redisinsight-1": 92882862.08,
+          "course-lab-worker-1": 59055800.32,
+          "course-lab-k6-run-b10e9c7e8537": 294859571.2
+        }
+      }
+    },
+    {
+      "artifact": "redis_queue-1-summary.json",
+      "sha256": "e89f98d34b270877f1bc4967805353980375bfb84c22bf964edee16217b6c2d1",
+      "approx_finished_utc": "2026-11-08T06:23:30.525157+00:00",
+      "duration_seconds": 6.586649383,
+      "resources_sampled_peak": {
+        "lab_container_cpu_cores": {
+          "course-lab-fastapi-node-1-1": 0.4968,
+          "course-lab-fastapi-node-2-1": 0.46240000000000003,
+          "course-lab-grafana-1": 0.0034000000000000002,
+          "course-lab-nginx-1": 0.15410000000000001,
+          "course-lab-node-exporter-1": 0.0,
+          "course-lab-postgres-1": 0.515,
+          "course-lab-postgres-exporter-1": 0.0378,
+          "course-lab-prometheus-1": 0.0073,
+          "course-lab-rabbitmq-1": 0.0055000000000000005,
+          "course-lab-redis-1": 0.1489,
+          "course-lab-redis-exporter-1": 0.0,
+          "course-lab-redisinsight-1": 0.0,
+          "course-lab-worker-1": 0.4509,
+          "course-lab-k6-run-40afc45bcf9c": 7.7338
+        },
+        "lab_container_memory_bytes": {
+          "course-lab-fastapi-node-1-1": 80195092.48,
+          "course-lab-fastapi-node-2-1": 79188459.52,
+          "course-lab-grafana-1": 88636129.28,
+          "course-lab-nginx-1": 15382609.92,
+          "course-lab-node-exporter-1": 7589593.088,
+          "course-lab-postgres-1": 89747619.84,
+          "course-lab-postgres-exporter-1": 9502195.712,
+          "course-lab-prometheus-1": 53099888.64,
+          "course-lab-rabbitmq-1": 155189248.0,
+          "course-lab-redis-1": 10517217.28,
+          "course-lab-redis-exporter-1": 9822011.392,
+          "course-lab-redisinsight-1": 92620718.08,
+          "course-lab-worker-1": 63124275.2,
+          "course-lab-k6-run-40afc45bcf9c": 275670630.4
+        }
+      }
+    },
+    {
+      "artifact": "redis_queue-2-summary.json",
+      "sha256": "feba82086aefc786880326033c6859150a94b53ef5be8c408fbae8d66b07530c",
+      "approx_finished_utc": "2026-11-08T06:23:53.633545+00:00",
+      "duration_seconds": 5.525034735,
+      "resources_sampled_peak": {
+        "lab_container_cpu_cores": {
+          "course-lab-fastapi-node-1-1": 0.9915999999999999,
+          "course-lab-fastapi-node-2-1": 0.9940000000000001,
+          "course-lab-grafana-1": 0.0088,
+          "course-lab-nginx-1": 0.12869999999999998,
+          "course-lab-node-exporter-1": 0.0048,
+          "course-lab-postgres-1": 0.369,
+          "course-lab-postgres-exporter-1": 0.0,
+          "course-lab-prometheus-1": 0.011200000000000002,
+          "course-lab-rabbitmq-1": 0.9818000000000001,
+          "course-lab-redis-1": 0.21100000000000002,
+          "course-lab-redis-exporter-1": 0.0409,
+          "course-lab-redisinsight-1": 0.0,
+          "course-lab-worker-1": 0.9028,
+          "course-lab-k6-run-1c6c21174fd7": 0.38189999999999996
+        },
+        "lab_container_memory_bytes": {
+          "course-lab-fastapi-node-1-1": 155503820.8,
+          "course-lab-fastapi-node-2-1": 82711674.88,
+          "course-lab-grafana-1": 88636129.28,
+          "course-lab-nginx-1": 16001269.76,
+          "course-lab-node-exporter-1": 8629780.48,
+          "course-lab-postgres-1": 102676561.92,
+          "course-lab-postgres-exporter-1": 8880390.144,
+          "course-lab-prometheus-1": 53078917.12,
+          "course-lab-rabbitmq-1": 216321228.8,
+          "course-lab-redis-1": 10611589.12,
+          "course-lab-redis-exporter-1": 12509511.68,
+          "course-lab-redisinsight-1": 92620718.08,
+          "course-lab-worker-1": 63260590.08,
+          "course-lab-k6-run-1c6c21174fd7": 275460915.2
+        }
+      }
+    },
+    {
+      "artifact": "redis_queue-3-summary.json",
+      "sha256": "e70e168a8bab4ab5c9c3c73170555bbb07738483ba84e373efd34028a9231e9e",
+      "approx_finished_utc": "2026-11-08T06:26:50.529886+00:00",
+      "duration_seconds": 6.4571498510000005,
+      "resources_sampled_peak": {
+        "lab_container_cpu_cores": {
+          "course-lab-fastapi-node-1-1": 0.9817,
+          "course-lab-fastapi-node-2-1": 0.9839,
+          "course-lab-grafana-1": 0.0040999999999999995,
+          "course-lab-nginx-1": 0.1308,
+          "course-lab-node-exporter-1": 0.0,
+          "course-lab-postgres-1": 0.5597,
+          "course-lab-postgres-exporter-1": 0.04019999999999999,
+          "course-lab-prometheus-1": 0.0064,
+          "course-lab-rabbitmq-1": 0.9954999999999999,
+          "course-lab-redis-1": 0.23,
+          "course-lab-redis-exporter-1": 0.0,
+          "course-lab-redisinsight-1": 0.0,
+          "course-lab-worker-1": 0.8543000000000001,
+          "course-lab-k6-run-d6b025170dca": 0.37170000000000003
+        },
+        "lab_container_memory_bytes": {
+          "course-lab-fastapi-node-1-1": 81694556.16,
+          "course-lab-fastapi-node-2-1": 81558241.28,
+          "course-lab-grafana-1": 125095116.8,
+          "course-lab-nginx-1": 15581839.36,
+          "course-lab-node-exporter-1": 7864320.0,
+          "course-lab-postgres-1": 98870231.04,
+          "course-lab-postgres-exporter-1": 8392802.304,
+          "course-lab-prometheus-1": 77080821.76,
+          "course-lab-rabbitmq-1": 219886387.2,
+          "course-lab-redis-1": 10726932.48,
+          "course-lab-redis-exporter-1": 10092544.0,
+          "course-lab-redisinsight-1": 92631203.84,
+          "course-lab-worker-1": 64414023.68,
+          "course-lab-k6-run-d6b025170dca": 278187212.8
+        }
+      }
+    },
+    {
+      "artifact": "sustained-300-summary.json",
+      "sha256": "1a172679b32e80f4cb494dd7b1360d77d451f0c9769243b75846f9a21d80e26c",
+      "approx_finished_utc": "2026-11-08T06:34:04.580019+00:00",
+      "duration_seconds": 101.443719482,
+      "resources_sampled_peak": {
+        "lab_container_cpu_cores": {
+          "course-lab-fastapi-node-1-1": 1.0001,
+          "course-lab-fastapi-node-2-1": 0.9982,
+          "course-lab-grafana-1": 0.1752,
+          "course-lab-nginx-1": 0.1543,
+          "course-lab-node-exporter-1": 0.0063,
+          "course-lab-postgres-1": 0.16940000000000002,
+          "course-lab-postgres-exporter-1": 0.0392,
+          "course-lab-prometheus-1": 0.08990000000000001,
+          "course-lab-rabbitmq-1": 1.0319,
+          "course-lab-redis-1": 0.1242,
+          "course-lab-redis-exporter-1": 0.0558,
+          "course-lab-redisinsight-1": 0.0012,
+          "course-lab-worker-1": 0.1442,
+          "course-lab-k6-run-1c39ac36030c": 0.3475
+        },
+        "lab_container_memory_bytes": {
+          "course-lab-fastapi-node-1-1": 111358771.2,
+          "course-lab-fastapi-node-2-1": 110205337.6,
+          "course-lab-grafana-1": 131596288.0,
+          "course-lab-nginx-1": 13054771.2,
+          "course-lab-node-exporter-1": 9690939.392,
+          "course-lab-postgres-1": 114609356.8,
+          "course-lab-postgres-exporter-1": 11093934.08,
+          "course-lab-prometheus-1": 89611304.96,
+          "course-lab-rabbitmq-1": 218523238.4,
+          "course-lab-redis-1": 17951621.12,
+          "course-lab-redis-exporter-1": 12090081.28,
+          "course-lab-redisinsight-1": 114189926.4,
+          "course-lab-worker-1": 73505177.6,
+          "course-lab-k6-run-1c39ac36030c": 156657254.4
+        }
+      }
+    },
+    {
+      "artifact": "sustained-3000-summary.json",
+      "sha256": "e64e444eb220149f73b4901770a0b46b38f17030ad3207741fa5f7c56becae80",
+      "approx_finished_utc": "2026-11-08T06:31:54.000499+00:00",
+      "duration_seconds": 101.724038431,
+      "resources_sampled_peak": {
+        "lab_container_cpu_cores": {
+          "course-lab-fastapi-node-1-1": 1.0312999999999999,
+          "course-lab-fastapi-node-2-1": 1.0343,
+          "course-lab-grafana-1": 0.1659,
+          "course-lab-nginx-1": 0.5274,
+          "course-lab-node-exporter-1": 0.0060999999999999995,
+          "course-lab-postgres-1": 0.24760000000000001,
+          "course-lab-postgres-exporter-1": 0.0387,
+          "course-lab-prometheus-1": 0.0802,
+          "course-lab-rabbitmq-1": 1.0238,
+          "course-lab-redis-1": 0.1322,
+          "course-lab-redis-exporter-1": 0.0437,
+          "course-lab-redisinsight-1": 0.0026,
+          "course-lab-worker-1": 0.4326,
+          "course-lab-k6-run-884fd1ce3247": 2.4063999999999997
+        },
+        "lab_container_memory_bytes": {
+          "course-lab-fastapi-node-1-1": 174587904.0,
+          "course-lab-fastapi-node-2-1": 110729625.6,
+          "course-lab-grafana-1": 129813708.8,
+          "course-lab-nginx-1": 65903001.6,
+          "course-lab-node-exporter-1": 9671016.448,
+          "course-lab-postgres-1": 111463628.8,
+          "course-lab-postgres-exporter-1": 10186915.84,
+          "course-lab-prometheus-1": 87870668.8,
+          "course-lab-rabbitmq-1": 217894092.8,
+          "course-lab-redis-1": 14711521.28,
+          "course-lab-redis-exporter-1": 12970885.12,
+          "course-lab-redisinsight-1": 114189926.4,
+          "course-lab-worker-1": 72152514.56,
+          "course-lab-k6-run-884fd1ce3247": 1013134131.2
+        }
+      }
+    },
+    {
+      "artifact": "sustained-initial-limit-summary.json",
+      "sha256": "caed2d5c20b5a344cb5b9cf7d87cc6ea9656e20e303d1ab262c7df7e13524b5c",
+      "approx_finished_utc": "2026-11-08T06:29:16.070915+00:00",
+      "duration_seconds": 116.785437537,
+      "resources_sampled_peak": {
+        "lab_container_cpu_cores": {
+          "course-lab-fastapi-node-1-1": 1.0779,
+          "course-lab-fastapi-node-2-1": 1.0414,
+          "course-lab-grafana-1": 0.1404,
+          "course-lab-nginx-1": 0.5106,
+          "course-lab-node-exporter-1": 0.0072,
+          "course-lab-postgres-1": 0.245,
+          "course-lab-postgres-exporter-1": 0.049100000000000005,
+          "course-lab-prometheus-1": 0.0764,
+          "course-lab-rabbitmq-1": 1.0471,
+          "course-lab-redis-1": 0.2293,
+          "course-lab-redis-exporter-1": 0.0451,
+          "course-lab-redisinsight-1": 0.0,
+          "course-lab-worker-1": 0.1618,
+          "course-lab-k6-run-a971a7c023ad": 2.2783
+        },
+        "lab_container_memory_bytes": {
+          "course-lab-fastapi-node-1-1": 111673344.0,
+          "course-lab-fastapi-node-2-1": 110624768.0,
+          "course-lab-grafana-1": 127506841.6,
+          "course-lab-nginx-1": 52030341.12,
+          "course-lab-node-exporter-1": 9363783.68,
+          "course-lab-postgres-1": 110624768.0,
+          "course-lab-postgres-exporter-1": 11660165.12,
+          "course-lab-prometheus-1": 86465576.96,
+          "course-lab-rabbitmq-1": 218837811.2,
+          "course-lab-redis-1": 16011755.52,
+          "course-lab-redis-exporter-1": 11785994.24,
+          "course-lab-redisinsight-1": 100180951.04,
+          "course-lab-worker-1": 74857840.64,
+          "course-lab-k6-run-a971a7c023ad": 1124207689.728
+        }
+      }
+    }
+  ]
+}

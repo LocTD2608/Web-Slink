@@ -26,16 +26,16 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="bg-academic-primary text-white shadow-md border-b border-blue-900 sticky top-0 z-30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex flex-col items-start justify-between gap-3 py-3 lg:flex-row lg:items-center lg:min-h-16">
           {/* Logo & Tên Cổng */}
           <div className="flex items-center space-x-3">
             <div className="bg-white/10 p-2 rounded-lg backdrop-blur-sm">
               <GraduationCap className="h-7 w-7 text-blue-200" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              <h1 className="text-base sm:text-lg font-bold tracking-tight text-white flex flex-wrap items-center gap-2">
                 CỔNG ĐĂNG KÝ HỌC PHẦN TRỰC TUYẾN
-                <span className="text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                <span className="text-xs whitespace-nowrap bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                   Cổng đang mở
                 </span>

@@ -1,0 +1,7 @@
+{
+  "confirmed": 10,
+  "enrolled": 10,
+  "mode": "postgres",
+  "run_id": "warmup-postgres",
+  "valid": true
+}

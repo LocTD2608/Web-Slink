@@ -1,0 +1,37 @@
+[
+  {
+    "job": "api",
+    "instance": "fastapi-node-1:8000",
+    "health": "up"
+  },
+  {
+    "job": "api",
+    "instance": "fastapi-node-2:8000",
+    "health": "up"
+  },
+  {
+    "job": "containers",
+    "instance": "node-exporter:9100",
+    "health": "up"
+  },
+  {
+    "job": "postgres",
+    "instance": "postgres-exporter:9187",
+    "health": "up"
+  },
+  {
+    "job": "rabbitmq",
+    "instance": "rabbitmq:15692",
+    "health": "up"
+  },
+  {
+    "job": "redis",
+    "instance": "redis-exporter:9121",
+    "health": "up"
+  },
+  {
+    "job": "worker",
+    "instance": "worker:9101",
+    "health": "up"
+  }
+]

@@ -1,0 +1,320 @@
+﻿name: course-lab
+services:
+  fastapi-node-1:
+    build:
+      context: C:\Users\truon\orca\workspaces\Hệ thống đăng kí học phần\observable-lab
+      dockerfile: infra/docker/app/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: true
+      rabbitmq:
+        condition: service_healthy
+        required: true
+      redis:
+        condition: service_healthy
+        required: true
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: "536870912"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/course_reg
+      JWT_SECRET: local-lab-demo-key-not-for-production
+      LAB_MODE: "true"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      REDIS_URL: redis://redis:6379/0
+      REGISTRATION_MODE: redis_queue
+      RESULT_DIR: /results
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:8000/ready
+      timeout: 4s
+      interval: 5s
+      retries: 30
+    networks:
+      app: null
+      data: null
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: C:\Users\truon\orca\workspaces\Hệ thống đăng kí học phần\observable-lab\artifacts\benchmarks
+        target: /results
+        bind: {}
+  fastapi-node-2:
+    build:
+      context: C:\Users\truon\orca\workspaces\Hệ thống đăng kí học phần\observable-lab
+      dockerfile: infra/docker/app/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: true
+      rabbitmq:
+        condition: service_healthy
+        required: true
+      redis:
+        condition: service_healthy
+        required: true
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: "536870912"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/course_reg
+      JWT_SECRET: local-lab-demo-key-not-for-production
+      LAB_MODE: "true"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      REDIS_URL: redis://redis:6379/0
+      REGISTRATION_MODE: redis_queue
+      RESULT_DIR: /results
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:8000/ready
+      timeout: 4s
+      interval: 5s
+      retries: 30
+    networks:
+      app: null
+      data: null
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: C:\Users\truon\orca\workspaces\Hệ thống đăng kí học phần\observable-lab\artifacts\benchmarks
+        target: /results
+        bind: {}
+  nginx:
+    build:
+      context: C:\Users\truon\orca\workspaces\Hệ thống đăng kí học phần\observable-lab
+      dockerfile: infra/docker/frontend/Dockerfile
+    depends_on:
+      fastapi-node-1:
+        condition: service_healthy
+        required: true
+      fastapi-node-2:
+        condition: service_healthy
+        required: true
+    deploy:
+      resources:
+        limits:
+          cpus: 0.5
+          memory: "134217728"
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -q
+        - --spider
+        - http://127.0.0.1/ready
+      timeout: 3s
+      interval: 5s
+      retries: 30
+    networks:
+      app: null
+    ports:
+      - mode: ingress
+        host_ip: 127.0.0.1
+        target: 80
+        published: "8088"
+        protocol: tcp
+  postgres:
+    deploy:
+      resources:
+        limits:
+          cpus: 2
+          memory: "1073741824"
+    environment:
+      POSTGRES_DB: course_reg
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U postgres -d course_reg
+      timeout: 2s
+      interval: 2s
+      retries: 30
+    image: postgres:16-alpine
+    networks:
+      data: null
+    volumes:
+      - type: volume
+        source: pgdata
+        target: /var/lib/postgresql/data
+        volume: {}
+  rabbitmq:
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: "805306368"
+    environment:
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: guest
+    healthcheck:
+      test:
+        - CMD
+        - rabbitmq-diagnostics
+        - -q
+        - check_port_connectivity
+      timeout: 4s
+      interval: 5s
+      retries: 30
+    image: rabbitmq:3.13-management-alpine
+    networks:
+      app: null
+      data: null
+    ports:
+      - mode: ingress
+        host_ip: 127.0.0.1
+        target: 15672
+        published: "15682"
+        protocol: tcp
+    volumes:
+      - type: volume
+        source: rabbitmqdata
+        target: /var/lib/rabbitmq
+        volume: {}
+      - type: bind
+        source: C:\Users\truon\orca\workspaces\Hệ thống đăng kí học phần\observable-lab\infra\monitoring\rabbitmq\enabled_plugins
+        target: /etc/rabbitmq/enabled_plugins
+        read_only: true
+        bind: {}
+  redis:
+    command:
+      - redis-server
+      - --appendonly
+      - 'yes'
+      - --maxmemory
+      - 512mb
+      - --maxmemory-policy
+      - noeviction
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: "805306368"
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      timeout: 2s
+      interval: 2s
+      retries: 30
+    image: redis:7-alpine
+    networks:
+      data: null
+    volumes:
+      - type: volume
+        source: redisdata
+        target: /data
+        volume: {}
+  worker:
+    build:
+      context: C:\Users\truon\orca\workspaces\Hệ thống đăng kí học phần\observable-lab
+      dockerfile: infra/docker/app/Dockerfile
+    command:
+      - python
+      - -m
+      - src.backend.worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: true
+      rabbitmq:
+        condition: service_healthy
+        required: true
+      redis:
+        condition: service_healthy
+        required: true
+    deploy:
+      resources:
+        limits:
+          cpus: 1
+          memory: "536870912"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/course_reg
+      JWT_SECRET: local-lab-demo-key-not-for-production
+      LAB_MODE: "true"
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      REDIS_URL: redis://redis:6379/0
+      REGISTRATION_MODE: redis_queue
+      RESULT_DIR: /results
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:9101/metrics
+      timeout: 2s
+      interval: 5s
+      retries: 30
+    networks:
+      app: null
+      data: null
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: C:\Users\truon\orca\workspaces\Hệ thống đăng kí học phần\observable-lab\artifacts\benchmarks
+        target: /results
+        bind: {}
+networks:
+  app:
+    name: course-lab_app
+  data:
+    name: course-lab_data
+    internal: true
+volumes:
+  pgdata:
+    name: course-lab_pgdata
+  rabbitmqdata:
+    name: course-lab_rabbitmqdata
+  redisdata:
+    name: course-lab_redisdata
+x-app:
+  build:
+    context: .
+    dockerfile: infra/docker/app/Dockerfile
+  depends_on:
+    postgres:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  deploy:
+    resources:
+      limits:
+        cpus: "1"
+        memory: 512M
+  environment:
+    DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/course_reg
+    JWT_SECRET: local-lab-demo-key-not-for-production
+    LAB_MODE: "true"
+    RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+    REDIS_URL: redis://redis:6379/0
+    REGISTRATION_MODE: redis_queue
+    RESULT_DIR: /results
+  healthcheck:
+    interval: 5s
+    retries: 30
+    test:
+      - CMD
+      - curl
+      - -fsS
+      - http://localhost:8000/ready
+    timeout: 4s
+  networks:
+    - app
+    - data
+  restart: unless-stopped
+  volumes:
+    - ./artifacts/benchmarks:/results

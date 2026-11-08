@@ -1,0 +1,13 @@
+{
+  "confirmed": 60,
+  "enrolled": 60,
+  "mode": "redis_queue",
+  "run_id": "sustained-3000",
+  "slots": 0,
+  "owners": 60,
+  "pending": 0,
+  "queues_empty": true,
+  "credits_valid": true,
+  "periods_valid": true,
+  "valid": true
+}

@@ -154,6 +154,12 @@
 
 ## Self-review and execution handoff
 
+### Execution record — 08/11/2026
+
+Tasks 1–9 implemented on `feature/observable-lab`. Shared operation code and tests were grouped rather than duplicated into the file-per-usecase layout above; the original checklist is retained as the planning record. Actual delivered modules, verification and rulings are documented in `docs/lab/implementation-review.md`; measured acceptance and limits in `docs/lab/measured-results.md`.
+
+Evidence: 46 Python tests (including dedicated PostgreSQL/Redis/RabbitMQ), 2 frontend tests and production build; PowerShell concurrent-runner check; six full flash runs with verified counts; real browser signup/reload/cancel/re-register/student-switch; seven Prometheus targets UP and Grafana inspected. Sustained 300 VUs passed; 3.000 VUs was executed twice and failed the no-error threshold. No production capacity claim follows from this lab. Diagram sources are supplied, without claiming rendered SVG/video verification.
+
 Spec coverage: Sections 1–4 → Tasks 7/9; Section 5 → Tasks 1–5; Section 6 → Task 6; Section 7 → Tasks 5/8; Section 8 → Task 7; Section 9 → Task 9; Section 10 → tests in all tasks and final verification. The five review risks have explicit test owners above.
 
 The subsystems share operation states and benchmark identity, so one sequential plan avoids mismatched contracts. Native implementation is recommended: one implementer retains lifecycle context, with a fresh whole-branch review at the end. No implementation starts until execution handoff required by writing-plans is resolved.

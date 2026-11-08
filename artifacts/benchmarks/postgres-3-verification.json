@@ -1,0 +1,7 @@
+{
+  "confirmed": 60,
+  "enrolled": 60,
+  "mode": "postgres",
+  "run_id": "postgres-3",
+  "valid": true
+}
