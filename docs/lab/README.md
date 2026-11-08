@@ -64,12 +64,14 @@ Sau flash: 60 CONFIRMED, enrolled 60; Redis thêm slots 0, owners 60, pending 0.
 
 Lua giữ chỗ cùng metadata PENDING nguyên tử; worker idempotent theo ticket. Publish timeout giữ trạng thái chưa rõ để đối soát. Worker retry lỗi hạ tầng ba lần rồi đưa thông tin lỗi vào DLQ, giữ pending để phục hồi. Lỗi nghiệp vụ xác định được ghi FAILED bền vững rồi trả chỗ theo ticket. Redis lỗi sau DB commit không được rollback DB.
 
+Metadata vé và idempotency đã kết thúc trong Redis có TTL mặc định 7 ngày (OPERATION_RETENTION_SECONDS, tối thiểu 60 giây); pending không hết hạn tự động. Lịch sử operation trong PostgreSQL được giữ để đối soát và bảo vệ khỏi job cũ. Runner PowerShell giữ mutex toàn phiên; lệnh lab thứ hai bị từ chối.
+
 Hủy chỉ cho CONFIRMED; DB CANCELLED trước, Redis trả chỗ sau. Hủy lặp không tăng sĩ số lần nữa. Chưa tự tái dựng pending sau mất toàn bộ Redis; không cam kết exactly-once xuyên ba hệ thống.
 
 ## Kiểm thử
 
 ~~~powershell
-docker compose -p course-lab-test -f docker-compose.test.yml up -d
+docker compose -p course-lab-test -f docker-compose.test.yml up -d --wait
 $env:RUN_REAL_INTEGRATION='1'
 python -m unittest discover -s tests -t .
 cd src/frontend

@@ -14,6 +14,16 @@ services:
   redis:
     image: redis:7-alpine
     ports: ["127.0.0.1:16379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
-    ports: ["127.0.0.1:15673:5672"]
+    ports: ["127.0.0.1:15673:5672", "127.0.0.1:15684:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 3s
+      timeout: 5s
+      retries: 30

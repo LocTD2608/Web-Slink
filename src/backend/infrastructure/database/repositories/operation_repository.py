@@ -124,6 +124,11 @@ class OperationRepository:
     async def cancel_registration(self, registration_id, student_id, expected_ticket_id, cancel_ticket_id, key):
         async with self.factory() as s, s.begin():
             await self._student_lock(s, student_id)
+            previous = await s.scalar(select(OperationModel).where(OperationModel.idempotency_key == key))
+            if previous:
+                if previous.payload_hash != registration_id:
+                    raise RegistrationError("IDEMPOTENCY_CONFLICT")
+                return operation(previous)
             previous = await s.get(OperationModel, cancel_ticket_id)
             if previous:
                 return operation(previous)
@@ -132,18 +137,17 @@ class OperationRepository:
                 raise RegistrationError("NOT_FOUND", 404)
             if reg.student_id != student_id:
                 raise RegistrationError("FORBIDDEN", 403)
-            if reg.ticket_id != expected_ticket_id:
-                raise RegistrationError("STALE_OPERATION")
+            stale = reg.ticket_id != expected_ticket_id
             sec = await s.scalar(select(CourseSectionModel).where(CourseSectionModel.id == reg.section_id).with_for_update())
-            if reg.status == "CONFIRMED":
+            if not stale and reg.status == "CONFIRMED":
                 reg.status = "CANCELLED"
                 sec.current_enrolled -= 1
             old = await s.get(OperationModel, expected_ticket_id)
-            if old:
+            if old and not stale:
                 old.status = "CANCELLED"
             row = OperationModel(ticket_id=cancel_ticket_id, student_id=student_id, section_id=reg.section_id,
-                kind="DROP", status="CANCELLED", idempotency_key=key, payload_hash=registration_id,
-                registration_id=registration_id, reason="", generation=old.generation if old else 0,
+                kind="DROP", status="FAILED" if stale else "CANCELLED", idempotency_key=key, payload_hash=registration_id,
+                registration_id=registration_id, reason="STALE_OPERATION" if stale else "", generation=old.generation if old else 0,
                 created_at=time.time(), payload={"expected_ticket_id": expected_ticket_id})
             s.add(row)
             await s.flush()

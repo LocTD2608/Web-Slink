@@ -53,3 +53,10 @@ class OperationsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(second.status, "CANCELLED")
         async with self.factory() as s:
             self.assertEqual((await s.get(CourseSectionModel, "sec")).current_enrolled, 0)
+
+    async def test_cancel_same_key_returns_original_ticket_under_lock(self):
+        first=await self.repo.confirm_registration(self.ctx,"t1","key1","hash")
+        results=await asyncio.gather(
+            self.repo.cancel_registration(first.registration_id,"s1","t1","d1","same-drop-key"),
+            self.repo.cancel_registration(first.registration_id,"s1","t1","d2","same-drop-key"))
+        self.assertEqual(results[0].ticket_id,results[1].ticket_id)

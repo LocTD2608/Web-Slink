@@ -1,5 +1,6 @@
 import json
 import time
+import os
 from dataclasses import asdict
 from src.backend.core.domain.entities.operation import Operation, RegistrationError
 
@@ -116,7 +117,9 @@ class ReservationStore:
             return
         data["operation"] = asdict(op)
         async with self.redis.pipeline(transaction=True) as pipe:
-            pipe.set(self.prefix+"op:"+op.ticket_id, json.dumps(data))
+            retention = max(60, int(os.getenv("OPERATION_RETENTION_SECONDS", "604800")))
+            pipe.set(self.prefix+"op:"+op.ticket_id, json.dumps(data), ex=retention)
+            pipe.expire(self.prefix+"idem:"+data["key"], retention)
             pipe.zrem(self.prefix+"pending", op.ticket_id)
             await pipe.execute()
 

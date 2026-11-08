@@ -4,6 +4,14 @@ param(
   [int]$VUs=3000
 )
 $ErrorActionPreference='Stop'
+$runMutex=[System.Threading.Mutex]::new($false,'Local\CourseRegistrationLabRunner')
+try { $acquired=$runMutex.WaitOne(0) }
+catch [System.Threading.AbandonedMutexException] { $acquired=$true }
+if (-not $acquired) {
+  $runMutex.Dispose()
+  throw 'Another lab command is running'
+}
+try {
 Set-Location (Split-Path $PSScriptRoot -Parent)
 New-Item -ItemType Directory -Force artifacts/metrics,artifacts/benchmarks | Out-Null
 function DC {
@@ -64,4 +72,8 @@ switch ($Action) {
   Verify { DC exec -T fastapi-node-1 python -m scripts.benchmark verify }
   Recover { DC run --rm --no-deps fastapi-node-1 python -m scripts.recover_operations --limit 1000 }
   Stop { DC --profile monitoring --profile tools stop }
+}
+} finally {
+  $runMutex.ReleaseMutex()
+  $runMutex.Dispose()
 }

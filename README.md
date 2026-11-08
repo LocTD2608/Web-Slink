@@ -16,5 +16,5 @@
 
 Đọc [hướng dẫn chạy và đo tải](docs/lab/README.md), [kịch bản demo 90 giây](docs/lab/demo-90-seconds.md), [thiết kế được duyệt](docs/superpowers/specs/2026-11-07-observable-registration-lab-design.md).
 
-Số liệu đo nằm trong artifacts/benchmarks khi chạy. Không coi mục tiêu 3.000 VUs là kết quả đã chứng minh nếu không có artifact tương ứng. Các tài liệu phân tích ban đầu trong docs/01_* đến docs/05_* và spec tháng 10 mô tả ý tưởng cũ; docs/lab là hướng dẫn hiện hành. Đây là lab trên một máy, chưa phải hệ thống production HA hoặc cổng SSO trường học.
+Đọc [kết quả kiểm thử và quyết định triển khai](docs/lab/implementation-review.md). Số liệu đo nằm trong artifacts/benchmarks khi chạy. Không coi mục tiêu 3.000 VUs là kết quả đã chứng minh nếu không có artifact tương ứng. Các tài liệu phân tích ban đầu trong docs/01_* đến docs/05_* và spec tháng 10 mô tả ý tưởng cũ; docs/lab là hướng dẫn hiện hành. Đây là lab trên một máy, chưa phải hệ thống production HA hoặc cổng SSO trường học.
 

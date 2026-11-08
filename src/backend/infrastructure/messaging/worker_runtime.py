@@ -18,8 +18,8 @@ async def run_worker():
                 ticket = json.loads(message.body)["ticket_id"]
                 for attempt in range(3):
                     try:
-                        await service.process(ticket)
-                        metrics.jobs.labels(kind, "processed").inc()
+                        op = await service.process(ticket)
+                        metrics.jobs.labels(kind, op.status.lower() if op else "ignored").inc()
                         return
                     except Exception:
                         metrics.jobs.labels(kind, "retry").inc()

@@ -26,7 +26,7 @@ def sample(output):
     lines.append(f"lab_container_sample_timestamp_seconds {time.time()}")
     output.parent.mkdir(parents=True, exist_ok=True)
     tmp = output.with_suffix(".tmp")
-    tmp.write_text("\n".join(lines)+"\n", encoding="utf-8")
+    tmp.write_bytes(("\n".join(lines)+"\n").encode("utf-8"))
     tmp.replace(output)
 
 if __name__ == "__main__":

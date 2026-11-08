@@ -77,7 +77,7 @@ class RegistrationService:
         ctx = RegistrationContext(**data["context"])
         pending = Operation(**data["operation"])
         if pending.status not in ("PENDING", "CANCEL_PENDING"):
-            return
+            return pending
         if pending.kind == "REGISTER":
             try:
                 op = await self.repository.confirm_registration(ctx, ticket_id, data["key"], data["hash"])
@@ -89,14 +89,21 @@ class RegistrationService:
         else:
             op = await self.repository.cancel_registration(pending.registration_id, pending.student_id,
                 data["expected_ticket_id"], ticket_id, data["key"])
-            await self.store.release(ctx, data["expected_ticket_id"])
-            old = await self.repository.get_operation(data["expected_ticket_id"])
-            if old:
-                await self.store.finish(old)
+            if op.status == "CANCELLED":
+                await self.store.release(ctx, data["expected_ticket_id"])
+                old = await self.repository.get_operation(data["expected_ticket_id"])
+                if old:
+                    await self.store.finish(old)
             await self.store.finish(op)
+        return op
 
     async def recover_pending(self, older_than_seconds=10, limit=100):
         tickets = await self.store.pending(older_than_seconds, limit)
+        recovered, deferred = 0, 0
         for ticket in tickets:
-            await self.process(ticket)
-        return {"recovered": len(tickets)}
+            try:
+                await self.process(ticket)
+                recovered += 1
+            except Exception:
+                deferred += 1
+        return {"recovered": recovered, "deferred": deferred}

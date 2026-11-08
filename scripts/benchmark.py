@@ -15,13 +15,16 @@ RESULTS = Path(os.getenv("RESULT_DIR", "artifacts/benchmarks"))
 def validate_counts(data, expected, mode):
     valid = data["confirmed"] == expected and data["enrolled"] == expected
     if mode == "redis_queue":
-        valid = valid and data["slots"] == 60-expected and data["owners"] == expected and data["pending"] == 0
+        valid = (valid and data["slots"] == 60-expected and data["owners"] == expected
+                 and data["pending"] == 0 and data.get("queues_empty") is True
+                 and data.get("credits_valid", True) and data.get("periods_valid", True))
     return valid
 
 async def queues_empty():
     async with httpx.AsyncClient(timeout=10) as client:
         for name in ("registration_queue", "drop_queue"):
-            response = await client.get(f"http://rabbitmq:15672/api/queues/%2F/{name}", auth=("guest","guest"))
+            base = os.getenv("RABBITMQ_MANAGEMENT_URL", "http://rabbitmq:15672")
+            response = await client.get(f"{base}/api/queues/%2F/{name}", auth=("guest","guest"))
             if response.status_code == 404: continue
             response.raise_for_status()
             q = response.json()
@@ -112,7 +115,12 @@ async def verify(mode, run_id, expected=60, timeout=60):
                 r = service.store.redis
                 data.update(slots=int(await r.get("lab:section:bench-section:slots") or -1),
                     owners=await r.hlen("lab:section:bench-section:owners"),pending=await r.zcard("lab:pending"))
-            if mode != "redis_queue" or (not data["pending"] and await queues_empty()) or time.monotonic()>=deadline:
+                data["queues_empty"] = await queues_empty()
+                owner_ids = await r.hkeys("lab:section:bench-section:owners")
+                credits = await r.mget([f"lab:student:bench-sem:{sid}:credits" for sid in owner_ids]) if owner_ids else []
+                data["credits_valid"] = all(value == "3" for value in credits)
+                data["periods_valid"] = all([await r.smembers(f"lab:student:bench-sem:{sid}:periods") == {"0","1","2"} for sid in owner_ids])
+            if mode != "redis_queue" or (not data["pending"] and data["queues_empty"]) or time.monotonic()>=deadline:
                 break
             await asyncio.sleep(1)
         data["valid"] = validate_counts(data,expected,mode)
