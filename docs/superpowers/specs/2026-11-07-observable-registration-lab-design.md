@@ -1,6 +1,6 @@
 # Thiết kế nâng cấp lab đăng ký học phần và đo tải
 
-Ngày: 2026-11-07. Trạng thái: Dự thảo chờ người dùng duyệt.
+Ngày: 2026-11-07. Trạng thái: Người dùng đã duyệt trong hội thoại ngày 2026-11-07.
 
 ## 1. Mục tiêu và phạm vi
 
