@@ -1,0 +1,116 @@
+{
+  "metadata": {
+    "project": "Hệ thống đăng ký học phần trực tuyến (Đề tài 08)",
+    "role": "SV4: Tạo tải, kiểm tra nhất quán và báo cáo",
+    "execution_timestamp": "2026-11-11T09:15:24.340315+00:00",
+    "target_endpoint": "http://localhost:8088",
+    "architecture": "Nginx L7 + 2x FastAPI Nodes + Redis In-Memory CAS + RabbitMQ Buffer + PostgreSQL"
+  },
+  "acceptance_tests": [
+    {
+      "code": "KT1",
+      "name": "Đăng ký hợp lệ làm giảm đúng 1 chỗ",
+      "status": "PASSED",
+      "timestamp": "2026-11-11T09:14:03.076985+00:00",
+      "input": {
+        "student_id": "std-0001",
+        "section_id": "sec-016"
+      },
+      "expected": "HTTP 202, Ticket CONFIRMED, slot giảm đúng 1",
+      "actual": "HTTP 202, Ticket CONFIRMED, slot giảm từ 40 xuống 39",
+      "latency_ms": 689.13
+    },
+    {
+      "code": "KT2",
+      "name": "Tranh chấp đồng thời chỗ cuối (Zero Overselling)",
+      "status": "PASSED",
+      "timestamp": "2026-11-11T09:14:15.262683+00:00",
+      "input": {
+        "total_users": 500,
+        "target_slots": 30,
+        "section_id": "sec-001"
+      },
+      "expected": "Đúng 30 thành công (202), đúng 470 từ chối (409), 0 bán vượt",
+      "actual": "Cấp 30/30 slots, từ chối 470/470, slot còn 0",
+      "throughput_rps": 67.8,
+      "latencies_ms": {
+        "p50": 535.2,
+        "p95": 1871.2,
+        "p99": 2706.2
+      },
+      "zero_overselling": true
+    },
+    {
+      "code": "KT3",
+      "name": "Chống gửi lại trùng lặp và đăng ký trùng học phần",
+      "status": "PASSED",
+      "timestamp": "2026-11-11T09:14:18.653578+00:00",
+      "input": {
+        "student_id": "std-0005",
+        "section_id": "sec-020",
+        "attempts": 3
+      },
+      "expected": "Lần 2 trả lại vé cũ (Idempotent), Lần 3 báo lỗi 409 Conflict, chỉ trừ đúng 1 slot",
+      "actual": "Lần 2 HTTP 202 khớp vé, Lần 3 HTTP 409, slot giảm từ 40 xuống 39 (-1)",
+      "idempotency_enforced": true
+    }
+  ],
+  "load_levels": [
+    {
+      "level": "Mức 1: Thấp (300 VUs)",
+      "total_requests": 300,
+      "read_requests": 240,
+      "write_requests": 60,
+      "duration_seconds": 4.89,
+      "throughput_rps": 61.4,
+      "avg_latency_ms": 924.8,
+      "p50_latency_ms": 783.0,
+      "p95_latency_ms": 2619.9,
+      "p99_latency_ms": 3081.3,
+      "error_count": 0,
+      "error_rate_pct": 0.0,
+      "status_distribution": {
+        "200": 240,
+        "202": 60
+      }
+    },
+    {
+      "level": "Mức 2: Trung bình (1.500 VUs)",
+      "total_requests": 1500,
+      "read_requests": 1200,
+      "write_requests": 300,
+      "duration_seconds": 22.71,
+      "throughput_rps": 66.1,
+      "avg_latency_ms": 1014.8,
+      "p50_latency_ms": 704.7,
+      "p95_latency_ms": 3025.0,
+      "p99_latency_ms": 5420.7,
+      "error_count": 0,
+      "error_rate_pct": 0.0,
+      "status_distribution": {
+        "200": 1200,
+        "409": 60,
+        "202": 240
+      }
+    },
+    {
+      "level": "Mức 3: Cao điểm (3.000 VUs)",
+      "total_requests": 3000,
+      "read_requests": 2400,
+      "write_requests": 600,
+      "duration_seconds": 36.06,
+      "throughput_rps": 83.2,
+      "avg_latency_ms": 815.8,
+      "p50_latency_ms": 562.1,
+      "p95_latency_ms": 2562.8,
+      "p99_latency_ms": 3785.3,
+      "error_count": 0,
+      "error_rate_pct": 0.0,
+      "status_distribution": {
+        "200": 2400,
+        "409": 580,
+        "202": 20
+      }
+    }
+  ]
+}

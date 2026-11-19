@@ -12,7 +12,10 @@ x-app: &app
     RESULT_DIR: /results
     REGISTRATION_MODE: ${REGISTRATION_MODE:-redis_queue}
     JWT_SECRET: ${JWT_SECRET:-local-lab-demo-key-not-for-production}
-  volumes: ["./artifacts/benchmarks:/results"]
+  volumes:
+    - ./artifacts/benchmarks:/results
+    - ./src:/app/src
+    - ./scripts:/app/scripts
   networks: [app, data]
   depends_on:
     postgres: {condition: service_healthy}

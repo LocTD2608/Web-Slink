@@ -134,4 +134,19 @@ def create_app(lab_mode=None, secret=None):
             profile = {"id":student.id, "student_code":student.student_code, "full_name":student.full_name,
                 "major":student.major, "max_credits":student.max_credits, "current_credits":0}
         return {"token":jwt.encode({"sub":body.student_id, "exp":time.time()+86400}, signing_key, algorithm="HS256"), "student":profile}
+
+    @app.post("/api/v1/lab/reset")
+    async def lab_reset(request: Request):
+        if not lab: raise HTTPException(404)
+        from src.backend.infrastructure.database.db_connection import AsyncSessionLocal
+        from scripts.cache_rebuild import warmup_cache
+        async with AsyncSessionLocal() as s:
+            await s.execute(text("DELETE FROM registrations"))
+            await s.execute(text("DELETE FROM operations"))
+            await s.execute(text("UPDATE course_sections SET current_enrolled = 0"))
+            await s.commit()
+        r = request.app.state.service.store.redis
+        await r.flushdb()
+        await warmup_cache()
+        return {"status": "success", "message": "Đã thiết lập lại dữ liệu mẫu thành công. Tất cả 200 lớp học phần sẵn sàng!"}
     return app
